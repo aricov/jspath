@@ -1,0 +1,23 @@
+{
+  "name": "jspath",
+  "version": "0.1.0",
+  "description": "Simple JSON Path expression matching",
+  "main": "api.js",
+  "dependencies": {},
+  "devDependencies": {
+    "@types/chai": "^4.0.1",
+    "@types/mocha": "^2.2.41",
+    "chai": "^4.0.2",
+    "mocha": "^3.4.2",
+    "pegjs": "^0.10.0",
+    "ts-node": "^3.1.0",
+    "typescript": "^2.3.4"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "mocha -r ts-node/register **/*.spec.ts",
+    "build:peg": "pegjs -o src/parser.js src/parser.pegjs"
+  },
+  "author": "Aris Vahlas",
+  "license": "ISC"
+}
