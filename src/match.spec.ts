@@ -150,7 +150,40 @@ describe('Matcher: ', () => {
         });
 
     });
+
+    describe('A child union path for two properties ($["a", "b"])', () => {
+        const match = matcher([$, new jp.Children(['a', 'b'])]);
+        it ( 'should match both properties', () => {
+            const results = match({ a:1, b:2, c: 3 });
+            expect(results).to.deep.equal([
+                {path: ['$', 'a'], value: 1},
+                {path: ['$', 'b'], value: 2}
+            ]);
+        }); 
+        it ( 'should match one property when the other is missing', () => {
+            const results = match({ a:1, c: 3 });
+            expect(results).to.deep.equal([
+                {path: ['$', 'a'], value: 1}
+            ]);
+        });
+    });
         
+    describe('An index union path for two indices ($[0, 2])', () => {
+        const match = matcher([$, new jp.Elements([0, 2])]);
+        it ( 'should find the first and third element of a four element array', () => {
+            const results = match([1, 2, 3, 4]);
+            expect(results).to.deep.equal([
+                {path: ['$', 0], value: 1},
+                {path: ['$', 2], value: 3}
+            ]);
+        }); 
+        it ( 'should match the first element of a two elemnets array', () => {
+            const results = match([1, 2]);
+            expect(results).to.deep.equal([
+                {path: ['$', 0], value: 1}
+            ]);
+        });
+    });
     describe('A path to all properties ($.* or $[*])', () => {
         const match = matcher([$, child.all]);
         it ( 'should match all elements of an array', () => {

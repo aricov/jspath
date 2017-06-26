@@ -11,37 +11,52 @@ jp_comp_desc = '..' name:identifier { return { type: 'descendant', name: name };
 
 jp_comp_child = '.' name:identifier { return { type: 'child', name: name }; }
 
-jp_comp_sub = '[' sub:jp_sub ']' { return sub; }
+jp_comp_sub = '[' _ sub:jp_sub _ ']' { return sub; }
 
 jp_sub 
   = '*' { return { type: 'all' } }
-  / jp_slice 
-  / i:sint { return { type: 'index', index: i}; }
+  / s:slice { return { type: 'slice', ...s}; } 
+  / l:sint_list { return { type: 'elements', indices: l}; }
+  / i:sint { return { type: 'element', index: i}; }
+  / l:jp_name_list { return {type: 'children', names: l}; }
+  / '[' _ s:qstring _ ']' { return {type: 'descendant', name:s}; }
+  / '[' _ l:jp_name_list _ ']' { return {type: 'descendants', names: l }; }
   / s:qstring { return { type: 'child', name: s}; }
 
-jp_slice = start:sint? ':' end:sint? step:(':' v:sint? { return v || undefined; })? {
-    let slice = { type: 'slice' };
-    if ( start !== null ) slice.start = start;
-    if ( end !== null ) slice.end = end;
-    if ( step !== null ) slice.step = step; 
-    return slice;
+slice 
+  = start:sint? ':' end:sint? step:(':' v:sint? { return v || undefined; })? {
+    const s = {};
+    if ( start !== null ) s.start = start;
+    if ( end !== null ) s.end = end;
+    if ( step !== null ) s.step = step; 
+    return s;
   }
 
-identifier
-  = first:[a-zA-Z] next:[a-zA-Z_0-9]* { return first + next.join(''); }
+sint_list 
+  = head:sint tail:( _ ',' _ i:sint {return i})+ {
+    return  [head, ...tail];
+  }
+
+jp_name_list 
+  = head:qstring tail:( _ ',' _ n:qstring {return n})+ {
+    return [head, ...tail]; 
+  }
 
 int = '0' / DIGIT_ DIGIT* { return parseInt(text(), 10) }
 sint = '-'? int { return parseInt(text(), 10) }
 
+jp_name = identifier / qstring;
+
+identifier
+  = first:[a-zA-Z] next:[a-zA-Z_0-9]* { return first + next.join(''); }
 
 qstring = dquot chars:(dquot_escaped / char / squot)* dquot  { return chars.join('') }
         / squot chars:(squot_escaped / char / dquot)* squot  { return chars.join('') }
 
 char
   = UNESCAPED
-  / escape
-    c: char_escaped
-    { return c; }
+  / escape 
+    c: char_escaped { return c; }
 
 escape = '\\'
 
@@ -69,3 +84,5 @@ UNESCAPED
 HEXDIG = [0-9a-f]i
 DIGIT  = [0-9]
 DIGIT_ = [1-9]
+
+_ = [ \t]*

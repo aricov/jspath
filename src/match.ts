@@ -30,13 +30,19 @@ const matchComponent = (source: any, comp: Component) : Match[] => {
         case 'root' : 
             return matchRoot(source); 
         case 'child': 
-            return matchChild(source, comp.name);
+            return matchChildNames(source, [comp.name]);
+        case 'children':
+            return matchChildNames(source, comp.names);
         case 'index': 
-            return matchIndex(source, comp.index);
+            return matchIndices(source, [comp.index]);
+        case 'elements':
+            return matchIndices(source, comp.indices);
         case 'slice':
             return matchSlice(source, comp.start, comp.end, comp.step);
         case 'descendant': 
-            return matchDescendants(source, comp.name);
+            return matchDescendants(source, [comp.name]);
+        case 'descendants': 
+            return matchDescendants(source, comp.names);
         case 'all':
             return matchAllChildren(source);
         default:
@@ -53,20 +59,19 @@ const matchRoot = (source: any) : Match[] => {
     }];
 };
 
-const matchIndex = (source: any, index: number): Match[] => {
-    if ( !Array.isArray(source) ) 
-        return [];
-
-    if ( index < 0 || index >= source.length ) 
+const matchIndices = (source: any, indices: number[]): Match[] => {
+    if ( !Array.isArray(source ) )
         return [];
     
-    return [{
-        path: [index],
-        value: source[index]
-    }];
+    return indices
+        .filter(index => index >= 0 && index < source.length)
+        .map(index => ({
+            path: [index],
+            value: source[index]
+        }));
 };
 
-const matchSlice = (source: any, start=0, end=Infinity, step=1) => {
+const matchSlice = (source: any, start=0, end=Infinity, step=1): Match[] => {
     if ( !Array.isArray(source) ) 
         return [];
 
@@ -92,7 +97,7 @@ const matchSlice = (source: any, start=0, end=Infinity, step=1) => {
     return matches;
 };
 
-const matchChild = (source: any, name: string): Match[] => {
+const matchChildNames = (source: any, names: string[]): Match[] => {
     switch ( typeof source ) {
         case 'undefined':
         case 'boolean':
@@ -109,18 +114,15 @@ const matchChild = (source: any, name: string): Match[] => {
     if ( Array.isArray(source) )
         return []; 
     
-    const value = source[name];
-    
-    if ( typeof value === 'undefined' )
-        return [];
-    
-    return [{
-        path: [name],
-        value: value
-    }];
-}
+    return names
+        .map(name => ({
+            path: [name], 
+            value: source[name]
+        }))
+        .filter(match => match.value !== undefined);
+};
 
-const matchDescendants = (source: any, name: string): Match[] => {
+const matchDescendants = (source: any, names: string[]): Match[] => {
     switch ( typeof source ) {
         case 'undefined':
         case 'boolean':
@@ -137,7 +139,7 @@ const matchDescendants = (source: any, name: string): Match[] => {
     if ( Array.isArray(source) ) {
         return source.reduce(
             (matches, item, index) => {
-                const sub = matchDescendants(item, name)
+                const sub = matchDescendants(item, names)
                     .map(match => ({ ...match, path: [index, ...match.path]}) )
                 return [...matches, ...sub ]
             }, 
@@ -145,13 +147,11 @@ const matchDescendants = (source: any, name: string): Match[] => {
         );
     }     
 
-    const initial:Match[] = source[name] !== undefined 
-        ? [{ path: [name], value: source[name]}] 
-        : [];
+    const initial:Match[] = matchChildNames(source,names);
 
     return Object.keys(source).reduce(
             (matches, key) => {
-                const sub = matchDescendants(source[key], name)
+                const sub = matchDescendants(source[key], names)
                     .map(match => ({...match, path: [key, ...match.path]}) );
                 return [...matches, ...sub]
             }, 
