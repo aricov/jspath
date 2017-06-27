@@ -1,0 +1,14 @@
+{
+    "format" : "es",
+    "dependencies" : {
+        "{ Child, Desc, Term, Expr, Scope }" : "./builder"
+    },
+    "allowedStartRules": [
+        "path",
+        "path_absolute",
+        "path_current",
+        "path_relative",
+        "expr",
+        "path_comp"
+    ]
+}
