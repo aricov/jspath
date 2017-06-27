@@ -1,6 +1,8 @@
-import * as parser from './parser';
 import { Path } from './ast';
-import { matcher, Match } from './match';
+import * as parser from './parser';
+import { matcher, Match } from './matcher';
+
+export { Match };
 
 export const compile = (path: string) => matcher(parser.parse(path) as Path);
 
@@ -12,5 +14,4 @@ export const match = (source: any, path: string): Match[] => {
 export const values = (source: any, path: string): any[] => {
     return match(source, path).map(match => match.value);
 };
-
 

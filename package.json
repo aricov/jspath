@@ -16,7 +16,7 @@
   "scripts": {
     "build": "tsc",
     "test": "mocha -r ts-node/register **/*.spec.ts",
-    "build:peg": "pegjs -o src/parser.js src/parser.pegjs"
+    "build:peg": "pegjs -o src/parser.js --allowed-start-rules path,expr src/parser.pegjs"
   },
   "author": "Aris Vahlas",
   "license": "ISC"

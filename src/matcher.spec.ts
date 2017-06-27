@@ -1,5 +1,5 @@
 import * as jp from './ast';
-import { matcher } from  './match';
+import { matcher } from  './matcher';
 
 import { expect } from 'chai';
 

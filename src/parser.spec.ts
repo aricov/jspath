@@ -101,6 +101,44 @@ describe('Parser: ', () => {
                 {type: 'descendants', names: ['Hello', 'World']}
             ]);
         });
+
+        it ( '[? @.value is `3]', () => {
+            expect(parser.parse('[? @.value is `3]')).to.deep.equal([{
+                    type: 'filter', 
+                    expr: {
+                        type: 'expr',
+                        op: 'is',
+                        neg: false,
+                        lhs: {
+                            type: 'path',
+                            value: [{type: 'current'}, {type: 'child', name: 'value'}]
+                        },
+                        rhs: {
+                            type: 'value',
+                            value: 3 
+                        }
+                    }
+            }]);
+        });
+
+        it ( '[? @.value in `[1,2,3, 5]]', () => {
+            expect(parser.parse('[? @.value in `[1,2,3,5]]')).to.deep.equal([{
+                    type: 'filter', 
+                    expr: {
+                        type: 'expr',
+                        op: 'in',
+                        neg: false,
+                        lhs: {
+                            type: 'path',
+                            value: [{type: 'current'}, {type: 'child', name: 'value'}]
+                        },
+                        rhs: {
+                            type: 'value',
+                            value: [1,2,3,5]
+                        }
+                    }
+            }]);
+        });
     });
 
     describe('Various combinations:', () => {
@@ -120,6 +158,131 @@ describe('Parser: ', () => {
                 {type: 'element', index: 2},
                 {type: 'element', index: 3}
             ]);
+        });
+
+        it( 'Join: $..books[? @.category is $.selectedCategory]', () => {
+            expect(parser.parse('$..books[? @.category is $.selectedCategory]')).to.deep.equal([
+                {type: 'root'},
+                {type: 'descendant', name: 'books'},
+                {type: 'filter', expr: {
+                    type: 'expr',
+                    op: 'is',
+                    neg: false,
+                    lhs: {
+                        type: 'path',
+                        value: [
+                            {type: 'current'},
+                            {type: 'child', name:'category'}
+                        ]
+                    },
+                    rhs: {
+                        type: 'path',
+                        value: [
+                            {type: 'root'},
+                            {type: 'child', name: 'selectedCategory'}
+                        ]
+                    }
+                }}
+            ]);
+        });
+    
+        it( 'Join: $..books[? @.category is $.selectedCategory or @.promoted is `true]', () => {
+            parser.parse('$..books[? @.category is $.selectedCategory or @.promoted is `true]');
+        });
+    });
+
+    describe('Expressions', () => {
+        it ( '$.code is `5', () => {
+            const results = parser.parse(
+                '$.code is `5', 
+                {startRule: 'expr'}
+            );
+            expect(results).to.deep.equal({
+                type: 'expr',
+                op: 'is',
+                neg: false,
+                lhs: {
+                    type: 'path',
+                    value: [
+                        {type: 'root'},
+                        {type: 'child', name: 'code'}
+                    ]
+                },
+                rhs: {
+                    type: 'value',
+                    value: 5
+                }
+            });
+        });
+        it ( 'not $.code is `5', () => {
+            const results = parser.parse(
+                'not $.code is `5', 
+                {startRule: 'expr'}
+            );
+            expect(results).to.deep.equal({
+                type: 'expr',
+                op: 'is',
+                neg: true,
+                lhs: {
+                    type: 'path',
+                    value: [
+                        {type: 'root'},
+                        {type: 'child', name: 'code'}
+                    ]
+                },
+                rhs: {
+                    type: 'value',
+                    value: 5
+                }
+            });
+        });
+        it ( '$.code empty', () => {
+            const results = parser.parse(
+                '$.code empty', 
+                {startRule: 'expr'}
+            );
+            expect(results).to.deep.equal({
+                type: 'expr',
+                op: 'empty',
+                neg: false,
+                lhs: {
+                    type: 'path',
+                    value: [
+                        {type: 'root'},
+                        {type: 'child', name: 'code'}
+                    ]
+                },
+                rhs: null
+            });
+        });
+        it ( 'not $.code empty', () => {
+            const results = parser.parse(
+                'not $.code empty', 
+                {startRule: 'expr'}
+            );
+            expect(results).to.deep.equal({
+                type: 'expr',
+                op: 'empty',
+                neg: true,
+                lhs: {
+                    type: 'path',
+                    value: [
+                        {type: 'root'},
+                        {type: 'child', name: 'code'}
+                    ]
+                },
+                rhs: null
+            });
+        });
+        it ( 'Should parse a complex expression:', () => {
+            try {
+                parser.parse(
+                    '($.code is `"1324" and $.other is `"") or $.code in `[1,2,3,4]', 
+                    {startRule: 'expr'}
+                );
+            } catch (error) {
+                console.log(error);
+            }
         });
     });
 });
