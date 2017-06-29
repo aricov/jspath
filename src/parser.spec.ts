@@ -102,8 +102,8 @@ describe('Parser: ', () => {
             ]);
         });
 
-        it ( '[? @.value is `3]', () => {
-            expect(parser.parse('[? @.value is `3]')).to.deep.equal([{
+        it ( '[? @.value is 3]', () => {
+            expect(parser.parse('[? @.value is 3]')).to.deep.equal([{
                     type: 'filter', 
                     expr: {
                         type: 'binary',
@@ -169,73 +169,127 @@ describe('Parser: ', () => {
                     op: 'is',
                     neg: false,
                     lhs: {
-                        type: 'path',
-                        value: [
-                            {type: 'current'},
-                            {type: 'child', name:'category'}
-                        ]
+                        type: 'path', value: [{type: 'current'}, {type: 'child', name:'category'} ]
                     },
                     rhs: {
                         type: 'path',
-                        value: [
-                            {type: 'root'},
-                            {type: 'child', name: 'selectedCategory'}
-                        ]
+                        value: [{type: 'root'}, {type: 'child', name: 'selectedCategory'}]
                     }
                 }}
             ]);
         });
     
-        it( 'Join: $..books[? @.category is $.selectedCategory or @.promoted is `true]', () => {
+        it( 'Join: $..books[? @.category is $.selectedCategory or @.promoted is true]', () => {
             parser.parse('$..books[? @.category is $.selectedCategory or @.promoted is `true]');
         });
     });
 
     describe('Expressions', () => {
-        it ( '$.code is `5', () => {
-            const results = parser.parse(
-                '$.code is `5', 
-                {startRule: 'expr'}
-            );
-            expect(results).to.deep.equal({
-                type: 'binary',
-                op: 'is',
-                neg: false,
-                lhs: {
-                    type: 'path',
-                    value: [
-                        {type: 'root'},
-                        {type: 'child', name: 'code'}
-                    ]
-                },
-                rhs: {
-                    type: 'value',
-                    value: 5
-                }
+        describe('Quoted', () => {
+            it ( '$.code is `5', () => {
+                const results = parser.parse(
+                    '$.code is `5', 
+                    {startRule: 'expr'}
+                );
+                expect(results).to.deep.equal({
+                    type: 'binary',
+                    op: 'is',
+                    neg: false,
+                    lhs: {
+                        type: 'path',
+                        value: [{type: 'root'}, {type: 'child', name: 'code'}]
+                    },
+                    rhs: {
+                        type: 'value',
+                        value: 5
+                    }
+                });
+            });
+            it ( 'not $.code is `5', () => {
+                const results = parser.parse(
+                    'not $.code is `5', 
+                    {startRule: 'expr'}
+                );
+                expect(results).to.deep.equal({
+                    type: 'binary',
+                    op: 'is',
+                    neg: true,
+                    lhs: {
+                        type: 'path',
+                        value: [{type: 'root'}, {type: 'child', name: 'code'}]
+                    },
+                    rhs: {
+                        type: 'value',
+                        value: 5
+                    }
+                });
             });
         });
-        it ( 'not $.code is `5', () => {
-            const results = parser.parse(
-                'not $.code is `5', 
-                {startRule: 'expr'}
-            );
-            expect(results).to.deep.equal({
-                type: 'binary',
-                op: 'is',
-                neg: true,
-                lhs: {
-                    type: 'path',
-                    value: [
-                        {type: 'root'},
-                        {type: 'child', name: 'code'}
-                    ]
-                },
-                rhs: {
-                    type: 'value',
-                    value: 5
-                }
+
+        describe('Not quoted', () => {
+            it ( '$.code is 5', () => {
+                const results = parser.parse(
+                    '$.code is 5', 
+                    {startRule: 'expr'}
+                );
+                expect(results).to.deep.equal({
+                    type: 'binary',
+                    op: 'is',
+                    neg: false,
+                    lhs: {
+                        type: 'path',
+                        value: [{type: 'root'}, {type: 'child', name: 'code'}]
+                    },
+                    rhs: {
+                        type: 'value',
+                        value: 5
+                    }
+                });
             });
+
+            it ( '@.code in [1,2,3]', () => {
+                const results = parser.parse(
+                    '@.code in [1,2,3]', 
+                    {startRule: 'expr'}
+                );
+                expect(results).to.deep.equal({
+                    type: 'binary',
+                    op: 'in',
+                    neg: false,
+                    lhs: {
+                        type: 'path',
+                        value: [{type: 'current'}, {type: 'child', name: 'code'}]
+                    },
+                    rhs: {
+                        type: 'value',
+                        value: [1,2,3]
+                    }
+                });
+            });
+
+            it ( 'Join: @.code in ^[1][2][3]', () => {
+                const results = parser.parse(
+                    '@.code in ^[1][2][3]', 
+                    {startRule: 'expr'}
+                );
+                expect(results).to.deep.equal({
+                    type: 'binary',
+                    op: 'in',
+                    neg: false,
+                    lhs: {
+                        type: 'path',
+                        value: [{type: 'current'}, {type: 'child', name: 'code'}]
+                    },
+                    rhs: {
+                        type: 'path',
+                        value: [{type: 'element', index: 1},{type: 'element', index: 2},{type: 'element', index: 3}]
+                    }
+                });
+            });
+
+
         });
+        
         it ( '$.code empty', () => {
             const results = parser.parse(
                 '$.code empty', 
@@ -247,10 +301,7 @@ describe('Parser: ', () => {
                 neg: false,
                 lhs: {
                     type: 'path',
-                    value: [
-                        {type: 'root'},
-                        {type: 'child', name: 'code'}
-                    ]
+                    value: [{type: 'root'}, {type: 'child', name: 'code'}]
                 }
             });
         });
@@ -265,17 +316,14 @@ describe('Parser: ', () => {
                 neg: true,
                 lhs: {
                     type: 'path',
-                    value: [
-                        {type: 'root'},
-                        {type: 'child', name: 'code'}
-                    ]
+                    value: [{type: 'root'}, {type: 'child', name: 'code'}]
                 }
             });
         });
-        it ( 'Should parse a complex expression:', () => {
+        it ( 'Should parse a complex expression', () => {
             try {
                 parser.parse(
-                    '($.code is `"1324" and $.other is `"") or $.code in `[1,2,3,4]', 
+                    '($.code is "1324" and $.other is "") or $.code in [1,2,3,4]', 
                     {startRule: 'expr'}
                 );
             } catch (error) {

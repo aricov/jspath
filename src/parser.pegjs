@@ -14,8 +14,8 @@ path
   / path_relative
 
 path_absolute = '$' comps:path_comp* { return [new ast.Root(), ...comps]; }
-path_current = '@' comps:path_comp* { return [new ast.Current(), ...comps]; }
-path_relative = comps:path_comp+ { return comps; }
+path_current  = '@' comps:path_comp* { return [new ast.Current(), ...comps]; }
+path_relative = '^'? comps:path_comp+ { return comps; }
 
 expr = expr_or
 
@@ -105,7 +105,7 @@ expr_simple
   }
  
 expr_term
-  = '`' v:value { return new ast.ValueTerm(v); }
+  = '`'? v:value { return new ast.ValueTerm(v); }
   / p:path_current { return new ast.PathTerm(p); }
   / p:path_absolute { return new ast.PathTerm(p); }
   / p:path_relative { return new ast.PathTerm(p); }
@@ -171,7 +171,7 @@ exp = E ( '-' / '+' ) DIGIT+;
 
 name = identifier / qstring;
 
-identifier
+identifier "identifer"
   = first:[a-zA-Z] next:[a-zA-Z_0-9]* { return first + next.join(''); }
 
 qstring "string"

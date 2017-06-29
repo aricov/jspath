@@ -185,6 +185,7 @@ describe('Matcher: ', () => {
             ]);
         });
     });
+    
     describe('A path to all properties ($.* or $[*])', () => {
         const match = matcher([$, child.all]);
         it ( 'should match all elements of an array', () => {
