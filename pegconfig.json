@@ -1,0 +1,13 @@
+{
+    "format" : "es",
+    "dependencies" : {
+        "* as ast" : "./ast"
+    },
+    "allowedStartRules": [
+        "path",
+        "path_absolute",
+        "path_current",
+        "path_relative",
+        "expr"
+    ]
+}

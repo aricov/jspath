@@ -50,13 +50,13 @@ describe('Parser: ', () => {
 
         it ( '[0:10]', () => {
             expect(parser.parse('[0:10]')).to.deep.equal([
-                {type: 'slice', start: 0, end: 10}
+                {type: 'slice', start: 0, end: 10, step: 1}
             ]);        
         });
 
         it ( '[-3:]', () => {
             expect(parser.parse('[-3:]')).to.deep.equal([
-                {type: 'slice', start: -3}
+                {type: 'slice', start: -3, end: Infinity, step: 1}
             ]);        
         });
 
@@ -68,7 +68,7 @@ describe('Parser: ', () => {
 
         it ( '[:10:2]', () => {
             expect(parser.parse('[:10:2]')).to.deep.equal([
-                {type: 'slice', end: 10, step: 2}
+                {type: 'slice', start: 0, end: 10, step: 2}
             ]);        
         });
 
@@ -106,7 +106,7 @@ describe('Parser: ', () => {
             expect(parser.parse('[? @.value is `3]')).to.deep.equal([{
                     type: 'filter', 
                     expr: {
-                        type: 'expr',
+                        type: 'binary',
                         op: 'is',
                         neg: false,
                         lhs: {
@@ -125,7 +125,7 @@ describe('Parser: ', () => {
             expect(parser.parse('[? @.value in `[1,2,3,5]]')).to.deep.equal([{
                     type: 'filter', 
                     expr: {
-                        type: 'expr',
+                        type: 'binary',
                         op: 'in',
                         neg: false,
                         lhs: {
@@ -165,7 +165,7 @@ describe('Parser: ', () => {
                 {type: 'root'},
                 {type: 'descendant', name: 'books'},
                 {type: 'filter', expr: {
-                    type: 'expr',
+                    type: 'binary',
                     op: 'is',
                     neg: false,
                     lhs: {
@@ -198,7 +198,7 @@ describe('Parser: ', () => {
                 {startRule: 'expr'}
             );
             expect(results).to.deep.equal({
-                type: 'expr',
+                type: 'binary',
                 op: 'is',
                 neg: false,
                 lhs: {
@@ -220,7 +220,7 @@ describe('Parser: ', () => {
                 {startRule: 'expr'}
             );
             expect(results).to.deep.equal({
-                type: 'expr',
+                type: 'binary',
                 op: 'is',
                 neg: true,
                 lhs: {
@@ -242,7 +242,7 @@ describe('Parser: ', () => {
                 {startRule: 'expr'}
             );
             expect(results).to.deep.equal({
-                type: 'expr',
+                type: 'unary',
                 op: 'empty',
                 neg: false,
                 lhs: {
@@ -251,8 +251,7 @@ describe('Parser: ', () => {
                         {type: 'root'},
                         {type: 'child', name: 'code'}
                     ]
-                },
-                rhs: null
+                }
             });
         });
         it ( 'not $.code empty', () => {
@@ -261,7 +260,7 @@ describe('Parser: ', () => {
                 {startRule: 'expr'}
             );
             expect(results).to.deep.equal({
-                type: 'expr',
+                type: 'unary',
                 op: 'empty',
                 neg: true,
                 lhs: {
@@ -270,8 +269,7 @@ describe('Parser: ', () => {
                         {type: 'root'},
                         {type: 'child', name: 'code'}
                     ]
-                },
-                rhs: null
+                }
             });
         });
         it ( 'Should parse a complex expression:', () => {

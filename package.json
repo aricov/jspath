@@ -9,14 +9,14 @@
     "@types/mocha": "^2.2.41",
     "chai": "^4.0.2",
     "mocha": "^3.4.2",
-    "pegjs": "^0.10.0",
+    "pegjs": "git+https://github.com/pegjs/pegjs.git",
     "ts-node": "^3.1.0",
     "typescript": "^2.3.4"
   },
   "scripts": {
     "build": "tsc",
     "test": "mocha -r ts-node/register **/*.spec.ts",
-    "build:peg": "pegjs -o src/parser.js --allowed-start-rules path,expr src/parser.pegjs"
+    "build:peg": "pegjs -o src/parser.js --extra-options-file pegconfig.json src/parser.pegjs"
   },
   "author": "Aris Vahlas",
   "license": "ISC"

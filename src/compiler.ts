@@ -1,0 +1,126 @@
+import * as ast from './ast';
+import { Matchers, Matcher, Match, MatchPath } from './matcher';
+
+type Operator = (lhs: any, rhs?:any) => boolean;
+
+const operators:{[name:string]: Operator} = {};
+
+export const compileValueTerm = (value: any) => (source: any) => value;
+
+export const compilePathTerm = (path: ast.Path) => {
+    const matcher = compilePath(path);
+    
+    if ( !matcher.multi ) {
+        // For single matches we need to extract the first match value or return udefined when there were no matches. 
+        return (source: any) => {
+            const matches = matcher.match(source);
+            return matches.length > 0 ? matches[0] : undefined;
+        };
+    }
+
+    return (source: any) => matcher.match(source).map(m => m.value);
+};
+
+export const compileTerm = (term: ast.Term) => (source: any): any => {
+    switch ( term.type ) {
+        case 'path': return compilePathTerm(term.value);
+        case 'value': return compileValueTerm(term.value);
+    }
+};
+
+export type CompiledExpression = (source: any) => boolean;
+
+export const compileUnaryExpression = (expr: ast.UnaryExpression): CompiledExpression => {
+    const predicate = operators[expr.op];
+    const lhs = compileTerm(expr.lhs);
+    if ( expr.neg ) {
+        return (source:any) => !predicate(lhs(source));
+    }
+    return (source: any) => predicate(lhs(source));
+};
+
+export const compileBinaryExpression = (expr: ast.BinaryExpression): CompiledExpression => {
+    const operator = operators[expr.op];
+    const lhs = compileTerm(expr.lhs);
+    const rhs = compileTerm(expr.rhs);
+    if ( expr.neg ) {
+        return (source:any) => !operator(lhs(source), rhs(source));
+    }
+    return (source: any) => operator(lhs(source), rhs(source));
+};
+
+export const compileOrGroup = (expr: ast.OrGroup): CompiledExpression => {
+    const lhs = compileExpression(expr.lhs);
+    const rhs = compileExpression(expr.rhs);
+    return (source:any) => lhs(source) || rhs(source);
+};
+
+export const compileAndGroup = (expr: ast.AndGroup): CompiledExpression => {
+    const lhs = compileExpression(expr.lhs);
+    const rhs = compileExpression(expr.rhs);
+    return (source:any) => lhs(source) && rhs(source);
+};
+
+export const compileExpression = (expr: ast.Expression): CompiledExpression => {
+    switch ( expr.type ) {
+        case 'or': return compileOrGroup(expr);
+        case 'and': return compileAndGroup(expr);
+        case 'unary': return compileUnaryExpression(expr);
+        case 'binary': return compileBinaryExpression(expr);
+    }
+};
+
+export const prepend = (path: MatchPath) => (match: Match) => ({
+    path : [...path, ...match.path],
+    value: match.value
+});
+
+export const compilePath = (path: ast.Path): Matcher => {
+    const compiledPath: Matcher[] = path.map(compileComponent);
+    const multi = compiledPath.reduce((multi, matcher) => multi || matcher.multi, false);
+    return new Matcher(
+        (source:any): Match[] => {
+            return compiledPath.reduce(
+                (matches, compiledComponent) => 
+                    matches.reduce(
+                        (previous, match) => [
+                            ...previous, 
+                            ...compiledComponent.match(match.value).map(prepend(match.path))
+                        ], 
+                        []
+                    ),
+                [{path: [], value: source}]    
+            ); 
+        },
+        multi
+    );
+};
+
+
+export const compileComponent = (comp: ast.Component): Matcher => {
+    switch ( comp.type ) {
+        case 'root' : 
+            return Matchers.root; 
+        case 'child': 
+            return Matchers.child(comp.name);
+        case 'children':
+            return Matchers.children(comp.names);
+        case 'element': 
+            return Matchers.element(comp.index);
+        case 'elements':
+            return Matchers.elements(comp.indices);
+        case 'slice':
+            return Matchers.slice(comp.start, comp.end, comp.step);
+        case 'descendant': 
+            return Matchers.descendant(comp.name);
+        case 'descendants': 
+            return Matchers.descendants(comp.names);
+        case 'all':
+            return Matchers.all;
+        case 'filter':
+            const expr = compileExpression(comp.filter);
+            return Matchers.filter(expr);
+        default:
+            return Matchers.none(true);
+    }
+};

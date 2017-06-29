@@ -1,4 +1,9 @@
-import { Path, Component } from './ast'
+export class Matcher {
+    constructor(
+        public readonly match: (source:any)=>Match[], 
+        public readonly multi:boolean=false
+    ){}
+}
 
 export type MatchPath = (string | number)[];
 
@@ -7,50 +12,7 @@ export interface Match {
     value: any;
 }
 
-export const prepend = (path: MatchPath) => (match: Match) => ({
-    path : [...path, ...match.path],
-    value: match.value
-});
-
-export const matcher = (path: Path) => (source: any): Match[] => 
-    path.reduce(
-        (matches, comp) => matches.reduce(
-            (previous, match) => [
-                ...previous, 
-                ...matchComponent(match.value, comp).map(prepend(match.path))
-            ], 
-            []
-        ), 
-        [{path: [], value: source}]
-    );
-
-
-const matchComponent = (source: any, comp: Component) : Match[] => {
-    switch ( comp.type ) {
-        case 'root' : 
-            return matchRoot(source); 
-        case 'child': 
-            return matchChildNames(source, [comp.name]);
-        case 'children':
-            return matchChildNames(source, comp.names);
-        case 'index': 
-            return matchIndices(source, [comp.index]);
-        case 'elements':
-            return matchIndices(source, comp.indices);
-        case 'slice':
-            return matchSlice(source, comp.start, comp.end, comp.step);
-        case 'descendant': 
-            return matchDescendants(source, [comp.name]);
-        case 'descendants': 
-            return matchDescendants(source, comp.names);
-        case 'all':
-            return matchAllChildren(source);
-        default:
-            return [];
-    }
-};
-
-const matchRoot = (source: any) : Match[] => {
+export const matchRoot = (source: any) : Match[] => {
     if ( typeof source === 'undefined' ) return [];
 
     return [{
@@ -59,7 +21,17 @@ const matchRoot = (source: any) : Match[] => {
     }];
 };
 
-const matchIndices = (source: any, indices: number[]): Match[] => {
+export const matchCurrent = (source: any) : Match[] => {
+    if ( typeof source === 'undefined' ) return [];
+
+    return [{
+        path: ['@'],
+        value: source
+    }];
+    
+}
+
+export const matchIndices = (source: any, indices: number[]): Match[] => {
     if ( !Array.isArray(source ) )
         return [];
     
@@ -67,11 +39,12 @@ const matchIndices = (source: any, indices: number[]): Match[] => {
         .filter(index => index >= 0 && index < source.length)
         .map(index => ({
             path: [index],
-            value: source[index]
+            value: source[index],
+            multi: indices.length > 1
         }));
 };
 
-const matchSlice = (source: any, start=0, end=Infinity, step=1): Match[] => {
+export const matchSlice = (source: any, start=0, end=Infinity, step=1): Match[] => {
     if ( !Array.isArray(source) ) 
         return [];
 
@@ -97,7 +70,7 @@ const matchSlice = (source: any, start=0, end=Infinity, step=1): Match[] => {
     return matches;
 };
 
-const matchChildNames = (source: any, names: string[]): Match[] => {
+export const matchChildNames = (source: any, names: string[]): Match[] => {
     switch ( typeof source ) {
         case 'undefined':
         case 'boolean':
@@ -122,7 +95,7 @@ const matchChildNames = (source: any, names: string[]): Match[] => {
         .filter(match => match.value !== undefined);
 };
 
-const matchDescendants = (source: any, names: string[]): Match[] => {
+export const matchDescendants = (source: any, names: string[]): Match[] => {
     switch ( typeof source ) {
         case 'undefined':
         case 'boolean':
@@ -159,7 +132,7 @@ const matchDescendants = (source: any, names: string[]): Match[] => {
         );
 };
 
-const matchAllChildren = (source: any): Match[] => {
+export const matchAllChildren = (source: any): Match[] => {
     switch ( typeof source ) {
         case 'undefined':
         case 'boolean':
@@ -186,4 +159,49 @@ const matchAllChildren = (source: any): Match[] => {
             value: source[key]
         }));
 
+};
+
+export const filterChildren = (source: any, filter:(child:any)=>boolean): Match[] => {
+    switch ( typeof source ) {
+        case 'undefined':
+        case 'boolean':
+        case 'number':
+        case 'string':
+        case 'symbol':
+        case 'function':
+            return [];
+    }
+
+    if ( source === null ) // typeof null === 'object' :( 
+        return [];
+
+    if ( Array.isArray(source) )
+        return source.map((elt, index) => ({
+            path: [index],
+            value: elt
+        }))
+        .filter(m => filter(m.value)); 
+    
+    return Object.keys(source)
+        .map(key => ({
+            path : [key],
+            value: source[key]
+        }))
+        .filter(m => filter(m.value));
+};
+
+const MULTI = true;
+
+export const Matchers = {
+    root: new Matcher(matchRoot),
+    child: (name:string) => new Matcher((source: any) => matchChildNames(source, [name])),
+    children: (names: string[]) => new Matcher((source: any) => matchChildNames(source, names), MULTI),
+    filter: (flt: (x:any)=>boolean) => new Matcher((source: any) => filterChildren(source, flt), true),
+    all: new Matcher(matchAllChildren),
+    descendant: (name: string) => new Matcher((source: any) => matchDescendants(source, [name])),
+    descendants: (names: string[]) => new Matcher((source: any) => matchDescendants(source, names), MULTI),
+    element: (index: number) => new Matcher((source:any) => matchIndices(source, [index])),
+    elements: (indices: number[]) => new Matcher((source: any) => matchIndices(source, indices), MULTI),
+    slice: (start?: number, end?: number, step?:number) => new Matcher((source:any) => matchSlice(source, start, end, step), true),
+    none: (multi: boolean) => new Matcher((source: any) => [], multi)
 };

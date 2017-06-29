@@ -1,7 +1,8 @@
 import * as jp from './ast';
-import { matcher } from  './matcher';
-
+import { compilePath } from './compiler';
 import { expect } from 'chai';
+
+const matcher = (path: jp.Path) => compilePath(path).match; 
 
 describe('Matcher: ', () => {
 

@@ -5,33 +5,46 @@
   }
 }
 
-path = root:jp_root? comps:jp_comp* { return root? [root, ...comps] : comps; }
+/*
+ * Starting rules 
+ */
+path 
+  = path_absolute
+  / path_current
+  / path_relative
+
+path_absolute = '$' comps:path_comp* { return [new ast.Root(), ...comps]; }
+path_current = '@' comps:path_comp* { return [new ast.Current(), ...comps]; }
+path_relative = comps:path_comp+ { return comps; }
 
 expr = expr_or
 
-jp_root = '$' { return { type: 'root'}; }
+/*
+ * Path structure
+ */
+path_root = '$' { return { type: 'root'}; }
 
-jp_comp 
-  = jp_comp_desc
-  / jp_comp_child 
-  / jp_comp_sub
+path_comp 
+  = path_comp_desc
+  / path_comp_child 
+  / path_comp_sub
 
-jp_comp_desc = '..' name:identifier { return { type: 'descendant', name: name }; }
+path_comp_desc = '..' name:identifier { return new ast.Descendant(name); }
 
-jp_comp_child = '.' name:identifier { return { type: 'child', name: name }; }
+path_comp_child = '.' name:identifier { return new ast.Child(name); }
 
-jp_comp_sub = '[' _ sub:jp_sub _ ']' { return sub; }
+path_comp_sub = '[' _ sub:path_sub _ ']' { return sub; }
 
 
-jp_sub 
-  = '*' { return { type: 'all' } }
-  / s:slice { return {type: 'slice', ...s}; } 
-  / l:sint_list { return {type: 'elements', indices: l}; }
-  / i:sint { return {type: 'element', index: i}; }
-  / l:name_list { return {type: 'children', names: l}; }
-  / '[' _ s:qstring _ ']' { return {type: 'descendant', name:s}; }
-  / '[' _ l:name_list _ ']' { return {type: 'descendants', names: l }; }
-  / s:qstring { return {type: 'child', name: s}; }
+path_sub 
+  = '*' { return new ast.All(); }
+  / s:slice { return new ast.Slice(s.start, s.end, s.step); } 
+  / l:sint_list { return new ast.Elements(l); }
+  / i:sint { return new ast.Element(i); }
+  / l:name_list { return new ast.Children(l); }
+  / '[' _ s:qstring _ ']' { return new ast.Descendant(s); }
+  / '[' _ l:name_list _ ']' { return new ast.Descendants(l); }
+  / s:qstring { return new ast.Child(s); }
   / '?' __ expr:expr_or { return {type: 'filter', expr}; }
 
 slice
@@ -66,12 +79,8 @@ expr_or
   / expr_and
 
 expr_and
-  = left:expr_bool __ AND __  right:expr_and {
-    return {
-      type: 'and',
-      lhs: left,
-      rhs: right
-    };
+  = lhs:expr_bool __ AND __  rhs:expr_and {
+    return new ast.AndGroup(lhs, rhs);
   }
   / expr_bool
 
@@ -81,20 +90,25 @@ expr_bool
 
 expr_simple
   = neg:'not 'i? lhs:expr_term __ op:identifier rhs:(__ t:expr_term { return t; })? {
-    return {
-      type: 'expr',
-      op,
-      neg: neg!==null,
-      lhs,
-      rhs
-    };
+    return rhs !== null
+      ? new ast.BinaryExpression(
+        op,
+        neg!==null,
+        lhs,
+        rhs
+      )
+      : new ast.UnaryExpression(
+        op,
+        neg!==null,
+        lhs
+      );
   }
  
 expr_term
-  = '`' v:value { return {type: 'value', value: v}; }
-  / p:path_current { return {type: 'path', value: p}; }
-  / p:path_absolute { return {type: 'path', value: p}; }
-  / p:path_relative { return {type: 'path', value: p}; }
+  = '`' v:value { return new ast.ValueTerm(v); }
+  / p:path_current { return new ast.PathTerm(p); }
+  / p:path_absolute { return new ast.PathTerm(p); }
+  / p:path_relative { return new ast.PathTerm(p); }
 
 OR = 'or'i
 AND = 'and'i
@@ -103,9 +117,6 @@ operator
   = 'is' { return text(); }
   / 'in' { return text(); }
 
-path_current = '@' comps:jp_comp* { return [{type:'current'}, ...comps]; }
-path_relative = comps:jp_comp+ { return [{type:'relative'}, ...comps]; }
-path_absolute = '$' comps:jp_comp* { return [{type: 'root'}, ...comps]; }
 
 /* Values */
 value 

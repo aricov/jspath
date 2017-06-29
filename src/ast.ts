@@ -2,6 +2,10 @@ export class Root {
     readonly type = 'root';
 }
 
+export class Current {
+    readonly type = 'current';
+}
+
 export class Child {
     readonly type = 'child';
     constructor(public name: string) {}
@@ -11,18 +15,18 @@ export class All {
     readonly type = 'all';
 }
 
-export class Indexed {
-    readonly type = 'index';
+export class Element {
+    readonly type = 'element';
     constructor(public readonly index: number) {}
 }
 
 export class Elements {
-    readonly type = "elements";
+    readonly type = 'elements';
     constructor(public readonly indices: number[]) {}
 }
 
 export class Children {
-    readonly type = "children";
+    readonly type = 'children';
     constructor(public readonly names: string[]) {}
 }
 
@@ -44,6 +48,58 @@ export class Descendants {
     constructor(public readonly names: string[]) {}
 }
 
-export type Component = Root | Child | Children | Indexed | Elements | Slice | All | Descendant | Descendants
+export class Filter {
+    readonly type = 'filter';
+    constructor(public readonly filter: Expression) {}
+} 
+
+export type Component = Root | Current| Child | Children | Element | Elements | Slice | All | Descendant | Descendants | Filter
 
 export type Path = Component[] 
+
+export class OrGroup {
+    readonly type = 'or';
+    constructor(public readonly lhs: Expression, public readonly rhs: Expression) {}
+}
+
+export class AndGroup {
+    readonly type = 'and';
+    constructor(public readonly lhs: Expression, public readonly rhs: Expression) {}
+}
+
+export class UnaryExpression {
+    readonly type = 'unary';
+    constructor(
+        public readonly op: string,
+        public readonly neg = false,
+        public readonly lhs: Term
+    ){}
+} 
+
+export class BinaryExpression {
+    readonly type = 'binary';
+    constructor(
+        public readonly op: string,
+        public readonly neg = false,
+        public readonly lhs: Term,
+        public readonly rhs: Term
+    ){}
+}
+
+export type Expression = OrGroup | AndGroup | BinaryExpression | UnaryExpression
+
+export class PathTerm {
+    public readonly type = 'path';
+    constructor(
+        public readonly value: Path
+    ){} 
+}
+
+export class ValueTerm {
+    public readonly type = 'value';
+    constructor(
+        public readonly value: any
+    ){} 
+}
+
+export type Term = PathTerm | ValueTerm; 

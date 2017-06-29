@@ -1,17 +1,10 @@
-import { Path } from './ast';
-import * as parser from './parser';
-import { matcher, Match } from './matcher';
+import { Matcher } from './matcher';
 
-export { Match };
+export { Matcher, Match, MatchPath } from './matcher';
 
-export const compile = (path: string) => matcher(parser.parse(path) as Path);
+export {  CompiledExpression } from './compiler';
 
-export const match = (source: any, path: string): Match[] => {
-    const matchFn = compile(path);
-    return matchFn(source);
-};
-
-export const values = (source: any, path: string): any[] => {
-    return match(source, path).map(match => match.value);
+export const values = (source: any, path: Matcher): any[] => {
+    return path.match(source).map(match => match.value);
 };
 
