@@ -3,6 +3,7 @@
         "target": "es5",
         "outDir": "./dist",
         "allowJs": true,
+        "declaration": false,
         "downlevelIteration": true,
         "noImplicitAny" : true,
         "noImplicitReturns": true,
@@ -10,7 +11,8 @@
         "noUnusedLocals": true
     },
     "include" : [
-        "src/**/*"
+        "src/**/*",
+        "src/**/*.pegjs"
     ],
     "exclude": [
         "**/*.spec.ts"

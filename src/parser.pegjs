@@ -10,19 +10,24 @@
  */
 path 
   = path_absolute
-  / path_current
   / path_relative
+  / path_current
 
-path_absolute = '$' comps:path_comp* { return [new ast.Root(), ...comps]; }
-path_current  = '@' comps:path_comp* { return [new ast.Current(), ...comps]; }
-path_relative = '^'? comps:path_comp+ { return comps; }
+path_absolute = scope:absolute_scope comps:path_comp* { return [scope, ...comps]; }
+path_relative = scope:relative_scope comps:path_comp* { return [scope, ...comps]; }
+path_current  
+  = '@' comps:path_comp* { return [new ast.RelativeScope(0), ...comps]; }
+  / &'.' comps:path_comp* { return [new ast.RelativeScope(0), ...comps]; } 
+  // Testing for the dot before attempting to match a non-scoped relative path removes the ambiguity with values,
+  // as values cannot start with '.' but may very well start with '['].
 
 expr = expr_or
 
 /*
  * Path structure
  */
-path_root = '$' { return { type: 'root'}; }
+absolute_scope = '$' scope_index:(int)? { return new ast.RootScope(scope_index || 0 ); } 
+relative_scope = '^' scope_index:(int)? { return new ast.RelativeScope(scope_index || 1 ); } 
 
 path_comp 
   = path_comp_desc
@@ -105,10 +110,8 @@ expr_simple
   }
  
 expr_term
-  = '`'? v:value { return new ast.ValueTerm(v); }
-  / p:path_current { return new ast.PathTerm(p); }
-  / p:path_absolute { return new ast.PathTerm(p); }
-  / p:path_relative { return new ast.PathTerm(p); }
+  = p:path { return new ast.PathTerm(p); } 
+  / '`'? v:value { return new ast.ValueTerm(v); }
 
 OR = 'or'i
 AND = 'and'i

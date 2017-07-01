@@ -1,8 +1,13 @@
 export class Matcher {
     constructor(
-        public readonly match: (source:any)=>Match[], 
+        public readonly match: (scopes:any[], source: any)=>Match[], 
         public readonly multi:boolean=false
     ){}
+}
+
+export interface PathMatcher {
+    match: (scopes: any[]) => Match[];
+    multi: boolean;
 }
 
 export type MatchPath = (string | number)[];
@@ -12,21 +17,25 @@ export interface Match {
     value: any;
 }
 
-export const matchRoot = (source: any) : Match[] => {
-    if ( typeof source === 'undefined' ) return [];
+export const matchRoot = (scopes: any[], index = 0) : Match[] => {
+    if ( typeof scopes === 'undefined' ) return [];
+    if ( scopes.length === 0 ) return [];
 
     return [{
-        path: ['$'],
-        value: source
+        path: [index],
+        value: scopes[index]
     }];
 };
 
-export const matchCurrent = (source: any) : Match[] => {
-    if ( typeof source === 'undefined' ) return [];
+export const matchRelative = (scopes: any[], index = 1) : Match[] => {
+    if ( typeof scopes === 'undefined' ) return [];
+    if ( scopes.length === 0 ) return [];
+
+    const actual = scopes.length -1;
 
     return [{
-        path: ['@'],
-        value: source
+        path: [actual],
+        value: scopes[scopes.length - index]
     }];
     
 }
@@ -161,7 +170,7 @@ export const matchAllChildren = (source: any): Match[] => {
 
 };
 
-export const filterChildren = (source: any, filter:(child:any)=>boolean): Match[] => {
+export const filterChildren = (scopes: any[], source: any, filter:(childscopes: any[])=>boolean): Match[] => {
     switch ( typeof source ) {
         case 'undefined':
         case 'boolean':
@@ -180,28 +189,29 @@ export const filterChildren = (source: any, filter:(child:any)=>boolean): Match[
             path: [index],
             value: elt
         }))
-        .filter(m => filter(m.value)); 
+        .filter(m => filter([...scopes, m.value])); 
     
     return Object.keys(source)
         .map(key => ({
             path : [key],
             value: source[key]
         }))
-        .filter(m => filter(m.value));
+        .filter(m => filter([...scopes, m.value]));
 };
 
 const MULTI = true;
 
+
 export const Matchers = {
     root: new Matcher(matchRoot),
-    child: (name:string) => new Matcher((source: any) => matchChildNames(source, [name])),
-    children: (names: string[]) => new Matcher((source: any) => matchChildNames(source, names), MULTI),
-    filter: (flt: (x:any)=>boolean) => new Matcher((source: any) => filterChildren(source, flt), true),
-    all: new Matcher(matchAllChildren),
-    descendant: (name: string) => new Matcher((source: any) => matchDescendants(source, [name])),
-    descendants: (names: string[]) => new Matcher((source: any) => matchDescendants(source, names), MULTI),
-    element: (index: number) => new Matcher((source:any) => matchIndices(source, [index])),
-    elements: (indices: number[]) => new Matcher((source: any) => matchIndices(source, indices), MULTI),
-    slice: (start?: number, end?: number, step?:number) => new Matcher((source:any) => matchSlice(source, start, end, step), true),
-    none: (multi: boolean) => new Matcher((source: any) => [], multi)
+    child: (name:string) => new Matcher((scopes: any[], source: any) => matchChildNames(source, [name])),
+    children: (names: string[]) => new Matcher((scopes: any[], source: any) => matchChildNames(source, names), MULTI),
+    filter: (flt: (x:any[])=>boolean) => new Matcher((scopes: any[], source: any) => filterChildren(scopes, source, flt), true),
+    all: new Matcher((scopes: any[], source:any) => matchAllChildren(source)),
+    descendant: (name: string) => new Matcher((scopes: any[], source: any) => matchDescendants(source, [name])),
+    descendants: (names: string[]) => new Matcher((scopes: any[], source: any) => matchDescendants(source, names), MULTI),
+    element: (index: number) => new Matcher((scopes: any[], source:any) => matchIndices(source, [index])),
+    elements: (indices: number[]) => new Matcher((scopes: any[], source: any) => matchIndices(source, indices), MULTI),
+    slice: (start?: number, end?: number, step?:number) => new Matcher((scopes: any[], source:any) => matchSlice(source, start, end, step), true),
+    none: (multi: boolean) => new Matcher((scopes: any[], source: any) => [], multi)
 };

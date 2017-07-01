@@ -1,10 +1,14 @@
-export class Root {
+export class RootScope {
     readonly type = 'root';
+    constructor(public readonly index = 0) {}
 }
 
-export class Current {
-    readonly type = 'current';
+export class RelativeScope {
+    readonly type = 'relative';
+    constructor(public readonly index = 1) {}
 }
+
+export type Scope = RootScope | RelativeScope
 
 export class Child {
     readonly type = 'child';
@@ -53,9 +57,9 @@ export class Filter {
     constructor(public readonly filter: Expression) {}
 } 
 
-export type Component = Root | Current| Child | Children | Element | Elements | Slice | All | Descendant | Descendants | Filter
+export type Component = Scope | Child | Children | Element | Elements | Slice | All | Descendant | Descendants | Filter;
 
-export type Path = Component[] 
+export type Path = Component[];
 
 export class OrGroup {
     readonly type = 'or';

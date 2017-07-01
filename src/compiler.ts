@@ -1,5 +1,5 @@
 import * as ast from './ast';
-import { Matchers, Matcher, Match, MatchPath } from './matcher';
+import { Matchers, PathMatcher, Matcher, Match, MatchPath } from './matcher';
 
 type Operator = (lhs: any, rhs?:any) => boolean;
 
@@ -28,7 +28,11 @@ export const compileTerm = (term: ast.Term) => (source: any): any => {
     }
 };
 
-export type CompiledExpression = (source: any) => boolean;
+export type CompiledExpression = (scopes: any[]) => boolean;
+
+export const negate = (expr: CompiledExpression): CompiledExpression  => {
+    return (scopes: any[]) => !expr(scopes);
+};
 
 export const compileUnaryExpression = (expr: ast.UnaryExpression): CompiledExpression => {
     const predicate = operators[expr.op];
@@ -75,27 +79,35 @@ export const prepend = (path: MatchPath) => (match: Match) => ({
     value: match.value
 });
 
-export const compilePath = (path: ast.Path): Matcher => {
+export const compilePath = (path: ast.Path): PathMatcher => {
     const compiledPath: Matcher[] = path.map(compileComponent);
     const multi = compiledPath.reduce((multi, matcher) => multi || matcher.multi, false);
-    return new Matcher(
-        (source:any): Match[] => {
-            return compiledPath.reduce(
-                (matches, compiledComponent) => 
-                    matches.reduce(
-                        (previous, match) => [
-                            ...previous, 
-                            ...compiledComponent.match(match.value).map(prepend(match.path))
-                        ], 
-                        []
-                    ),
-                [{path: [], value: source}]    
-            ); 
-        },
-        multi
-    );
-};
 
+    const matchFn = (scopes: any[]): Match[] => {
+        if ( scopes.length < 1) return [];
+
+        // This is probably useless, and we could directly iterate over all components.
+        // It helps understanding what's going on a bit better though,
+        // because the first path component is special in that it must be a scope component.
+        const scopeMatch = compiledPath[0].match(scopes, undefined)[0];
+        if ( scopeMatch.value === undefined ) return [];
+        const compiledComponents = compiledPath.slice(1);
+
+        return compiledComponents.reduce(
+            (matches, compiledComponent): Match[] => {
+                return matches.reduce(
+                    (previous: Match[], match: Match): Match[] => [
+                        ...previous, 
+                        ...compiledComponent.match(scopes, match.value).map(prepend(match.path))
+                    ], 
+                    []
+                );
+            },
+            [scopeMatch]);
+    };
+
+    return { match: matchFn, multi};
+};
 
 export const compileComponent = (comp: ast.Component): Matcher => {
     switch ( comp.type ) {
@@ -124,3 +136,4 @@ export const compileComponent = (comp: ast.Component): Matcher => {
             return Matchers.none(true);
     }
 };
+

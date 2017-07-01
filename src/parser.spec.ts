@@ -4,183 +4,141 @@ import * as parser from './parser';
 
 describe('Parser: ', () => {
 
+    const parse_comp = (txt: string) => parser.parse(txt, { startRule: 'path_comp' });
+
+    const test_comp = (txt:string, expected:any) => {
+        return it( txt, () => {
+            expect(parse_comp(txt)).to.deep.equal(expected);
+        });
+    };
+
+    const test_expr = (txt:string, expected:any) => {
+        return it( txt, () => {
+            expect(parser.parse(txt)).to.deep.equal(expected);
+        });
+    };
+
+    describe('Path scopes: ', () => {
+        const test_scope = (txt: string, expected: any) => 
+            it( txt, () => expect(parser.parse(txt)).to.deep.equal(expected));
+        
+        test_scope('$',  [{type: 'root', index: 0}]);
+        test_scope('$1',  [{type: 'root', index: 1}]);
+        test_scope('$3',  [{type: 'root', index: 3}]);
+
+        test_scope('@',  [{type: 'relative', index: 0}]);
+        test_scope('^',  [{type: 'relative', index: 1}]);
+
+    });
+
     describe('Path components: ', () => {
 
-        it( '$' , () => {
-            expect(parser.parse('$')).to.deep.equal([
-                {type: 'root'}
-            ])
-        });
 
-        it ( '.prop', () => {
-            expect(parser.parse('.prop')).to.deep.equal([
-                {type: 'child', name:'prop'}
-            ]);
-        })
+        test_comp('.prop', {type: 'child', name:'prop'});
 
-        it ( '["Hello world"]', () => {
-            expect(parser.parse('["Hello world"]')).to.deep.equal([
-                {type: 'child', name:'Hello world'}
-            ]);
-        });
+        test_comp('["Hello world"]', {type: 'child', name:'Hello world'});
 
-        it ( '["Hello","world"]', () => {
-            expect(parser.parse('[ "Hello", "world" ]')).to.deep.equal([
-                {type: 'children', names:['Hello', 'world']}
-            ]);
-        });
+        test_comp('[ "Hello", "world" ]', {type: 'children', names:['Hello', 'world']});
 
-        it ( '[42]', () => {
-            expect(parser.parse('[42]')).to.deep.equal([
-                {type: 'element', index: 42}
-            ]);        
-        });
+        test_comp('[42]', {type: 'element', index: 42});       
 
-        it ( '[-42]', () => {
-            expect(parser.parse('[-42]')).to.deep.equal([
-                {type: 'element', index: -42}
-            ]);        
-        });
+        test_comp('[-42]', {type: 'element', index: -42});       
 
-        it ( '[0:10:2]', () => {
-            expect(parser.parse('[0:10:2]')).to.deep.equal([
-                {type: 'slice', start: 0, end: 10, step:2}
-            ]);        
-        });
+        test_comp('[0:10:2]', {type: 'slice', start: 0, end: 10, step:2});       
 
-        it ( '[0:10]', () => {
-            expect(parser.parse('[0:10]')).to.deep.equal([
-                {type: 'slice', start: 0, end: 10, step: 1}
-            ]);        
-        });
+        test_comp('[0:10]', {type: 'slice', start: 0, end: 10, step: 1});       
 
-        it ( '[-3:]', () => {
-            expect(parser.parse('[-3:]')).to.deep.equal([
-                {type: 'slice', start: -3, end: Infinity, step: 1}
-            ]);        
-        });
+        test_comp('[-3:]', {type: 'slice', start: -3, end: Infinity, step: 1});
 
-        it ( '[-1:0:-1]', () => {
-            expect(parser.parse('[-1:0:-1]')).to.deep.equal([
-                {type: 'slice', start: -1, end: 0, step: -1}
-            ]);        
-        });
+        test_comp('[-1:0:-1]', {type: 'slice', start: -1, end: 0, step: -1});
 
-        it ( '[:10:2]', () => {
-            expect(parser.parse('[:10:2]')).to.deep.equal([
-                {type: 'slice', start: 0, end: 10, step: 2}
-            ]);        
-        });
+        test_comp('[:10:2]', {type: 'slice', start: 0, end: 10, step: 2});
 
-        it ( '[1,2,3]', () => {
-            expect(parser.parse('[1,2,3]')).to.deep.equal([
-                {type: 'elements', indices:[1,2,3]}
-            ]);
-        });
+        test_comp('[1,2,3]', {type: 'elements', indices:[1,2,3]});
 
-        it ( '[*]', () => {
-            expect(parser.parse('[*]')).to.deep.equal([
-                {type: 'all'}
-            ]);
-        });
+        test_comp('[*]', {type: 'all'});
 
-        it ( '..hello', () => {
-            expect(parser.parse('..hello')).to.deep.equal([
-                {type: 'descendant', name: 'hello'}
-            ]);
-        });
+        test_comp('..hello', {type: 'descendant', name: 'hello'});
 
-        it ( '[["Hello, World"]]', () => {
-            expect(parser.parse('[["Hello, World"]]')).to.deep.equal([
-                {type: 'descendant', name: 'Hello, World'}
-            ]);
-        });
+        test_comp('[["Hello, World"]]', {type: 'descendant', name: 'Hello, World'});
 
-        it ( '[["Hello", "World"]]', () => {
-            expect(parser.parse('[["Hello", "World"]]')).to.deep.equal([
-                {type: 'descendants', names: ['Hello', 'World']}
-            ]);
-        });
+        test_comp('[["Hello", "World"]]', {type: 'descendants', names: ['Hello', 'World']});
 
-        it ( '[? @.value is 3]', () => {
-            expect(parser.parse('[? @.value is 3]')).to.deep.equal([{
-                    type: 'filter', 
-                    expr: {
-                        type: 'binary',
-                        op: 'is',
-                        neg: false,
-                        lhs: {
-                            type: 'path',
-                            value: [{type: 'current'}, {type: 'child', name: 'value'}]
-                        },
-                        rhs: {
-                            type: 'value',
-                            value: 3 
-                        }
+        test_comp('[? .value is 3]', 
+            {
+                type: 'filter', 
+                expr: {
+                    type: 'binary',
+                    op: 'is',
+                    neg: false,
+                    lhs: {
+                        type: 'path',
+                        value: [{type: 'relative', index: 0}, {type: 'child', name: 'value'}]
+                    },
+                    rhs: {
+                        type: 'value',
+                        value: 3 
                     }
-            }]);
-        });
+                }
+            });
 
-        it ( '[? @.value in `[1,2,3, 5]]', () => {
-            expect(parser.parse('[? @.value in `[1,2,3,5]]')).to.deep.equal([{
-                    type: 'filter', 
-                    expr: {
-                        type: 'binary',
-                        op: 'in',
-                        neg: false,
-                        lhs: {
-                            type: 'path',
-                            value: [{type: 'current'}, {type: 'child', name: 'value'}]
-                        },
-                        rhs: {
-                            type: 'value',
-                            value: [1,2,3,5]
-                        }
+        test_comp('[? .value in `[1,2,3,5]]',
+            {
+                type: 'filter', 
+                expr: {
+                    type: 'binary',
+                    op: 'in',
+                    neg: false,
+                    lhs: {
+                        type: 'path',
+                        value: [{type: 'relative', index: 0}, {type: 'child', name: 'value'}]
+                    },
+                    rhs: {
+                        type: 'value',
+                        value: [1,2,3,5]
                     }
-            }]);
+                }
         });
     });
 
     describe('Various combinations:', () => {
-        it ( '$..books[3].price', () => {
-            expect(parser.parse('$..books[3].price')).to.deep.equal([
-                {type: 'root'},
+        test_expr('$..books[3].price', [
+                {type: 'root', index: 0},
                 {type: 'descendant', name: 'books'},
                 {type: 'element', index: 3},
                 {type: 'child', name: 'price'}
-            ])
-        });
+            ]);
 
         it ( 'Consecutive indices: $[1][2][3]', () => {
             expect(parser.parse('$[1][2][3]')).to.deep.equal([
-                {type: 'root'},
+                {type: 'root', index: 0},
                 {type: 'element', index: 1},
                 {type: 'element', index: 2},
                 {type: 'element', index: 3}
             ]);
         });
 
-        it( 'Join: $..books[? @.category is $.selectedCategory]', () => {
+        it( 'Join: $..books[? .category is $.selectedCategory]', () => {
             expect(parser.parse('$..books[? @.category is $.selectedCategory]')).to.deep.equal([
-                {type: 'root'},
+                {type: 'root', index: 0},
                 {type: 'descendant', name: 'books'},
                 {type: 'filter', expr: {
                     type: 'binary',
                     op: 'is',
                     neg: false,
                     lhs: {
-                        type: 'path', value: [{type: 'current'}, {type: 'child', name:'category'} ]
+                        type: 'path', value: [{type: 'relative', index: 0}, {type: 'child', name:'category'} ]
                     },
                     rhs: {
                         type: 'path',
-                        value: [{type: 'root'}, {type: 'child', name: 'selectedCategory'}]
+                        value: [{type: 'root', index: 0}, {type: 'child', name: 'selectedCategory'}]
                     }
                 }}
             ]);
         });
     
-        it( 'Join: $..books[? @.category is $.selectedCategory or @.promoted is true]', () => {
-            parser.parse('$..books[? @.category is $.selectedCategory or @.promoted is `true]');
+        it( 'Join: $..books[? .category is $.selectedCategory or .promoted is true]', () => {
+            parser.parse('$..books[? .category is $.selectedCategory or .promoted is `true]');
         });
     });
 
@@ -197,7 +155,7 @@ describe('Parser: ', () => {
                     neg: false,
                     lhs: {
                         type: 'path',
-                        value: [{type: 'root'}, {type: 'child', name: 'code'}]
+                        value: [{type: 'root', index: 0}, {type: 'child', name: 'code'}]
                     },
                     rhs: {
                         type: 'value',
@@ -216,7 +174,7 @@ describe('Parser: ', () => {
                     neg: true,
                     lhs: {
                         type: 'path',
-                        value: [{type: 'root'}, {type: 'child', name: 'code'}]
+                        value: [{type: 'root', index: 0}, {type: 'child', name: 'code'}]
                     },
                     rhs: {
                         type: 'value',
@@ -238,7 +196,7 @@ describe('Parser: ', () => {
                     neg: false,
                     lhs: {
                         type: 'path',
-                        value: [{type: 'root'}, {type: 'child', name: 'code'}]
+                        value: [{type: 'root', index: 0}, {type: 'child', name: 'code'}]
                     },
                     rhs: {
                         type: 'value',
@@ -258,7 +216,7 @@ describe('Parser: ', () => {
                     neg: false,
                     lhs: {
                         type: 'path',
-                        value: [{type: 'current'}, {type: 'child', name: 'code'}]
+                        value: [{type: 'relative', index: 0}, {type: 'child', name: 'code'}]
                     },
                     rhs: {
                         type: 'value',
@@ -278,11 +236,11 @@ describe('Parser: ', () => {
                     neg: false,
                     lhs: {
                         type: 'path',
-                        value: [{type: 'current'}, {type: 'child', name: 'code'}]
+                        value: [{type: 'relative', index: 0}, {type: 'child', name: 'code'}]
                     },
                     rhs: {
                         type: 'path',
-                        value: [{type: 'element', index: 1},{type: 'element', index: 2},{type: 'element', index: 3}]
+                        value: [{type: 'relative', index: 1}, {type: 'element', index: 1},{type: 'element', index: 2},{type: 'element', index: 3}]
                     }
                 });
             });
@@ -301,7 +259,7 @@ describe('Parser: ', () => {
                 neg: false,
                 lhs: {
                     type: 'path',
-                    value: [{type: 'root'}, {type: 'child', name: 'code'}]
+                    value: [{type: 'root', index: 0}, {type: 'child', name: 'code'}]
                 }
             });
         });
@@ -316,7 +274,7 @@ describe('Parser: ', () => {
                 neg: true,
                 lhs: {
                     type: 'path',
-                    value: [{type: 'root'}, {type: 'child', name: 'code'}]
+                    value: [{type: 'root', index: 0}, {type: 'child', name: 'code'}]
                 }
             });
         });
