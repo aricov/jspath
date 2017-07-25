@@ -202,7 +202,6 @@ export const filterChildren = (scopes: any[], source: any, filter:(childscopes: 
 const MULTI = true;
 
 export const Matchers = {
-    root: new Matcher(matchRoot),
     filter: (flt: (x:any[])=>boolean) => new Matcher((scopes: any[], source: any) => filterChildren(scopes, source, flt), true),
     all: new Matcher((scopes: any[], source:any) => matchAllChildren(source)),
     elements: (indices: number[]) => new Matcher((scopes: any[], source: any) => matchIndices(source, indices), MULTI),
@@ -215,5 +214,7 @@ export const Matchers = {
             return new Matcher((scopes: any[], source: any) => matchDescendants(source, names), multi);
         else 
             return new Matcher((scopes: any[], source: any) => matchChildNames(source, names), multi);
-    }
-};
+    },
+    root: (index: number) => new Matcher((scopes: any[], source: any) => matchRoot(scopes, index)),
+    relative: (index: number) => new Matcher((scopes: any[], source: any) => matchRelative(scopes, index))
+}

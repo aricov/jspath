@@ -112,7 +112,9 @@ export const compilePath = (path: ast.Path): PathMatcher => {
 export const compileComponent = (comp: ast.Component): Matcher => {
     switch ( comp.type ) {
         case 'root' : 
-            return Matchers.root;
+            return Matchers.root(comp.index);
+        case 'relative':
+            return Matchers.relative(comp.index);
         case 'named':
             return Matchers.named(comp.names, comp.descendants);
         case 'elements':
