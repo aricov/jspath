@@ -40,9 +40,9 @@ describe('Parser: ', () => {
 
         test_comp('[ "Hello", "world" ]', {type: 'children', names:['Hello', 'world']});
 
-        test_comp('[42]', {type: 'element', index: 42});       
+        test_comp('[42]', {type: 'elements', indices: [42]});       
 
-        test_comp('[-42]', {type: 'element', index: -42});       
+        test_comp('[-42]', {type: 'elements', indices: [-42]});       
 
         test_comp('[0:10:2]', {type: 'slice', start: 0, end: 10, step:2});       
 
@@ -105,16 +105,16 @@ describe('Parser: ', () => {
         test_expr('$..books[3].price', [
                 {type: 'root', index: 0},
                 {type: 'descendant', name: 'books'},
-                {type: 'element', index: 3},
+                {type: 'elements', indices: [3]},
                 {type: 'child', name: 'price'}
             ]);
 
         it ( 'Consecutive indices: $[1][2][3]', () => {
             expect(parser.parse('$[1][2][3]')).to.deep.equal([
                 {type: 'root', index: 0},
-                {type: 'element', index: 1},
-                {type: 'element', index: 2},
-                {type: 'element', index: 3}
+                {type: 'elements', indices: [1]},
+                {type: 'elements', indices: [2]},
+                {type: 'elements', indices: [3]}
             ]);
         });
 
@@ -240,7 +240,7 @@ describe('Parser: ', () => {
                     },
                     rhs: {
                         type: 'path',
-                        value: [{type: 'relative', index: 1}, {type: 'element', index: 1},{type: 'element', index: 2},{type: 'element', index: 3}]
+                        value: [{type: 'relative', index: 1}, {type: 'elements', indices: [1]},{type: 'elements', indices: [2]},{type: 'elements', indices: [3]}]
                     }
                 });
             });

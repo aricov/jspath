@@ -57,7 +57,7 @@ export class Filter {
     constructor(public readonly filter: Expression) {}
 } 
 
-export type Component = Scope | Child | Children | Element | Elements | Slice | All | Descendant | Descendants | Filter;
+export type Component = Scope | Child | Children | Elements | Slice | All | Descendant | Descendants | Filter;
 
 export type Path = Component[];
 

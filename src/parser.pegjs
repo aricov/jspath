@@ -45,7 +45,7 @@ path_sub
   = '*' { return new ast.All(); }
   / s:slice { return new ast.Slice(s.start, s.end, s.step); } 
   / l:sint_list { return new ast.Elements(l); }
-  / i:sint { return new ast.Element(i); }
+  / i:sint { return new ast.Elements([i]); }
   / l:name_list { return new ast.Children(l); }
   / '[' _ s:qstring _ ']' { return new ast.Descendant(s); }
   / '[' _ l:name_list _ ']' { return new ast.Descendants(l); }

@@ -210,7 +210,6 @@ export const Matchers = {
     all: new Matcher((scopes: any[], source:any) => matchAllChildren(source)),
     descendant: (name: string) => new Matcher((scopes: any[], source: any) => matchDescendants(source, [name])),
     descendants: (names: string[]) => new Matcher((scopes: any[], source: any) => matchDescendants(source, names), MULTI),
-    element: (index: number) => new Matcher((scopes: any[], source:any) => matchIndices(source, [index])),
     elements: (indices: number[]) => new Matcher((scopes: any[], source: any) => matchIndices(source, indices), MULTI),
     slice: (start?: number, end?: number, step?:number) => new Matcher((scopes: any[], source:any) => matchSlice(source, start, end, step), true),
     none: (multi: boolean) => new Matcher((scopes: any[], source: any) => [], multi)

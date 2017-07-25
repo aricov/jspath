@@ -117,8 +117,6 @@ export const compileComponent = (comp: ast.Component): Matcher => {
             return Matchers.child(comp.name);
         case 'children':
             return Matchers.children(comp.names);
-        case 'element': 
-            return Matchers.element(comp.index);
         case 'elements':
             return Matchers.elements(comp.indices);
         case 'slice':
