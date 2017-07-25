@@ -8,14 +8,14 @@ describe('Matcher: ', () => {
 
     const $ = new jp.RootScope();
     const child = {
-        prop: new jp.Child('prop'),
-        length: new jp.Child('length'),
+        prop: new jp.Named(['prop']),
+        length: new jp.Named(['length']),
         all:  new jp.All()
     };
 
     const desc = {
-        prop: new jp.Descendant('prop'),
-        length: new jp.Descendant('length')
+        prop: new jp.Named(['prop'], true),
+        length: new jp.Named(['length'], true)
     };
 
     describe('The root path ($)', () => {
@@ -153,7 +153,7 @@ describe('Matcher: ', () => {
     });
 
     describe('A child union path for two properties ($["a", "b"])', () => {
-        const match = matcher([$, new jp.Children(['a', 'b'])]);
+        const match = matcher([$, new jp.Named(['a', 'b'])]);
         it ( 'should match both properties', () => {
             const results = match({ a:1, b:2, c: 3 });
             expect(results).to.deep.equal([
@@ -218,7 +218,7 @@ describe('Matcher: ', () => {
             ]);
         });
         it ( 'should flatten recursive matches', () => {
-            const matchDeep = matcher([$, child.prop, child.all, new jp.Child('a'), child.all]);
+            const matchDeep = matcher([$, child.prop, child.all, new jp.Named(['a']), child.all]);
             const results = matchDeep({
                 prop: [{
                     a: [1, 2, 3],

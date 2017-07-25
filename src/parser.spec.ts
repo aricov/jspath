@@ -34,11 +34,11 @@ describe('Parser: ', () => {
     describe('Path components: ', () => {
 
 
-        test_comp('.prop', {type: 'child', name:'prop'});
+        test_comp('.prop', {type: 'named', descendants: false, names:['prop']});
 
-        test_comp('["Hello world"]', {type: 'child', name:'Hello world'});
+        test_comp('["Hello world"]', {type: 'named', descendants: false, names:['Hello world']});
 
-        test_comp('[ "Hello", "world" ]', {type: 'children', names:['Hello', 'world']});
+        test_comp('[ "Hello", "world" ]', {type: 'named', descendants: false, names:['Hello', 'world']});
 
         test_comp('[42]', {type: 'elements', indices: [42]});       
 
@@ -58,11 +58,11 @@ describe('Parser: ', () => {
 
         test_comp('[*]', {type: 'all'});
 
-        test_comp('..hello', {type: 'descendant', name: 'hello'});
+        test_comp('..hello', {type: 'named', descendants: true, names: ['hello']});
 
-        test_comp('[["Hello, World"]]', {type: 'descendant', name: 'Hello, World'});
+        test_comp('[["Hello, World"]]', {type: 'named', descendants: true, names: ['Hello, World']});
 
-        test_comp('[["Hello", "World"]]', {type: 'descendants', names: ['Hello', 'World']});
+        test_comp('[["Hello", "World"]]', {type: 'named', descendants: true, names: ['Hello', 'World']});
 
         test_comp('[? .value is 3]', 
             {
@@ -73,7 +73,7 @@ describe('Parser: ', () => {
                     neg: false,
                     lhs: {
                         type: 'path',
-                        value: [{type: 'relative', index: 0}, {type: 'child', name: 'value'}]
+                        value: [{type: 'relative', index: 0}, {type: 'named', descendants: false, names:['value']}]
                     },
                     rhs: {
                         type: 'value',
@@ -91,7 +91,7 @@ describe('Parser: ', () => {
                     neg: false,
                     lhs: {
                         type: 'path',
-                        value: [{type: 'relative', index: 0}, {type: 'child', name: 'value'}]
+                        value: [{type: 'relative', index: 0}, {type: 'named', descendants: false, names: ['value']}]
                     },
                     rhs: {
                         type: 'value',
@@ -104,9 +104,9 @@ describe('Parser: ', () => {
     describe('Various combinations:', () => {
         test_expr('$..books[3].price', [
                 {type: 'root', index: 0},
-                {type: 'descendant', name: 'books'},
+                {type: 'named', descendants: true, names: ['books']},
                 {type: 'elements', indices: [3]},
-                {type: 'child', name: 'price'}
+                {type: 'named', descendants: false, names: ['price']}
             ]);
 
         it ( 'Consecutive indices: $[1][2][3]', () => {
@@ -121,17 +121,17 @@ describe('Parser: ', () => {
         it( 'Join: $..books[? .category is $.selectedCategory]', () => {
             expect(parser.parse('$..books[? @.category is $.selectedCategory]')).to.deep.equal([
                 {type: 'root', index: 0},
-                {type: 'descendant', name: 'books'},
+                {type: 'named', descendants: true, names: ['books']},
                 {type: 'filter', expr: {
                     type: 'binary',
                     op: 'is',
                     neg: false,
                     lhs: {
-                        type: 'path', value: [{type: 'relative', index: 0}, {type: 'child', name:'category'} ]
+                        type: 'path', value: [{type: 'relative', index: 0}, {type: 'named', descendants: false, names:['category']} ]
                     },
                     rhs: {
                         type: 'path',
-                        value: [{type: 'root', index: 0}, {type: 'child', name: 'selectedCategory'}]
+                        value: [{type: 'root', index: 0}, {type: 'named', descendants: false, names: ['selectedCategory']}]
                     }
                 }}
             ]);
@@ -155,7 +155,7 @@ describe('Parser: ', () => {
                     neg: false,
                     lhs: {
                         type: 'path',
-                        value: [{type: 'root', index: 0}, {type: 'child', name: 'code'}]
+                        value: [{type: 'root', index: 0}, {type: 'named', descendants: false, names: ['code']}]
                     },
                     rhs: {
                         type: 'value',
@@ -174,7 +174,7 @@ describe('Parser: ', () => {
                     neg: true,
                     lhs: {
                         type: 'path',
-                        value: [{type: 'root', index: 0}, {type: 'child', name: 'code'}]
+                        value: [{type: 'root', index: 0}, {type: 'named', descendants: false, names: ['code']}]
                     },
                     rhs: {
                         type: 'value',
@@ -196,7 +196,7 @@ describe('Parser: ', () => {
                     neg: false,
                     lhs: {
                         type: 'path',
-                        value: [{type: 'root', index: 0}, {type: 'child', name: 'code'}]
+                        value: [{type: 'root', index: 0}, {type: 'named', descendants: false, names: ['code']}]
                     },
                     rhs: {
                         type: 'value',
@@ -216,7 +216,7 @@ describe('Parser: ', () => {
                     neg: false,
                     lhs: {
                         type: 'path',
-                        value: [{type: 'relative', index: 0}, {type: 'child', name: 'code'}]
+                        value: [{type: 'relative', index: 0}, {type: 'named', descendants: false, names: ['code']}]
                     },
                     rhs: {
                         type: 'value',
@@ -236,7 +236,7 @@ describe('Parser: ', () => {
                     neg: false,
                     lhs: {
                         type: 'path',
-                        value: [{type: 'relative', index: 0}, {type: 'child', name: 'code'}]
+                        value: [{type: 'relative', index: 0}, {type: 'named', descendants: false, names: ['code']}]
                     },
                     rhs: {
                         type: 'path',
@@ -259,7 +259,7 @@ describe('Parser: ', () => {
                 neg: false,
                 lhs: {
                     type: 'path',
-                    value: [{type: 'root', index: 0}, {type: 'child', name: 'code'}]
+                    value: [{type: 'root', index: 0}, {type: 'named', descendants: false, names: ['code']}]
                 }
             });
         });
@@ -274,7 +274,7 @@ describe('Parser: ', () => {
                 neg: true,
                 lhs: {
                     type: 'path',
-                    value: [{type: 'root', index: 0}, {type: 'child', name: 'code'}]
+                    value: [{type: 'root', index: 0}, {type: 'named', descendants: false, names: ['code']}]
                 }
             });
         });

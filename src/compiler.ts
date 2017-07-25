@@ -112,19 +112,13 @@ export const compilePath = (path: ast.Path): PathMatcher => {
 export const compileComponent = (comp: ast.Component): Matcher => {
     switch ( comp.type ) {
         case 'root' : 
-            return Matchers.root; 
-        case 'child': 
-            return Matchers.child(comp.name);
-        case 'children':
-            return Matchers.children(comp.names);
+            return Matchers.root;
+        case 'named':
+            return Matchers.named(comp.names, comp.descendants);
         case 'elements':
             return Matchers.elements(comp.indices);
         case 'slice':
             return Matchers.slice(comp.start, comp.end, comp.step);
-        case 'descendant': 
-            return Matchers.descendant(comp.name);
-        case 'descendants': 
-            return Matchers.descendants(comp.names);
         case 'all':
             return Matchers.all;
         case 'filter':

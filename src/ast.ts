@@ -10,11 +10,6 @@ export class RelativeScope {
 
 export type Scope = RootScope | RelativeScope
 
-export class Child {
-    readonly type = 'child';
-    constructor(public name: string) {}
-}
-
 export class All {
     readonly type = 'all';
 }
@@ -29,9 +24,9 @@ export class Elements {
     constructor(public readonly indices: number[]) {}
 }
 
-export class Children {
-    readonly type = 'children';
-    constructor(public readonly names: string[]) {}
+export class Named {
+    readonly type = 'named';
+    constructor(public readonly names: string[], public readonly descendants = false) {}
 }
 
 export class Slice {
@@ -42,22 +37,12 @@ export class Slice {
         public readonly step = 1) {}
 }
 
-export class Descendant {
-    readonly type = 'descendant';
-    constructor(public readonly name: string) {}
-}
-
-export class Descendants {
-    readonly type = 'descendants';
-    constructor(public readonly names: string[]) {}
-}
-
 export class Filter {
     readonly type = 'filter';
     constructor(public readonly filter: Expression) {}
 } 
 
-export type Component = Scope | Child | Children | Elements | Slice | All | Descendant | Descendants | Filter;
+export type Component = Scope | Named | Elements | Slice | All | Filter;
 
 export type Path = Component[];
 
