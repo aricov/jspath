@@ -47,16 +47,13 @@ path_spec_child
   = '*' { return new ast.All(); }
   / s:slice { return new ast.Slice(s.start, s.end, s.step); } 
   / l:sint_list { return new ast.Elements(l); }
-  / i:sint { return new ast.Elements([i]); }
   / l:name_list { return new ast.Named(l); }
-  / s:qstring { return new ast.Named([s]); }
   / '?' __ expr:expr_or { return {type: 'filter', expr, descendants: false}; }
 
 path_spec_desc
   = '*' { return new ast.All(true); }
   / _ l:name_list _ { return new ast.Named(l, true); }
-  / _ s:qstring _ { return new ast.Named([s], true); }
-  / '?' __ expr:expr_or { return {type: 'filter', expr, descendants: true}; }
+   / '?' __ expr:expr_or { return {type: 'filter', expr, descendants: true}; }
 
 slice
   = start:sint? ':' end:sint? step:(':' v:sint? { return v || undefined; })? {
@@ -68,12 +65,12 @@ slice
   }
 
 sint_list 
-  = head:sint tail:( _ ',' _ i:sint {return i})+ {
+  = head:sint tail:( _ ',' _ i:sint {return i})* {
     return  [head, ...tail];
   }
 
 name_list 
-  = head:qstring tail:( _ ',' _ n:qstring {return n})+ {
+  = head:qstring tail:( _ ',' _ n:qstring {return n})* {
     return [head, ...tail]; 
   }
 
