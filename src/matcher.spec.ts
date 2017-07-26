@@ -15,7 +15,8 @@ describe('Matcher: ', () => {
 
     const desc = {
         prop: new jp.Named(['prop'], true),
-        length: new jp.Named(['length'], true)
+        length: new jp.Named(['length'], true),
+        all: new jp.All(true)
     };
 
     describe('The root path ($)', () => {
@@ -237,6 +238,51 @@ describe('Matcher: ', () => {
             ]);
         });
     });
+
+    describe('A path to all descendants ($[**])', () => {
+        const match = matcher([$, desc.all]);
+        it('should flatten a simple object', () => {
+            const results = match({ a:1, b:2, c:3 });
+            expect(results).to.deep.equal([
+                {path: [0, 'a'], value:1},
+                {path: [0, 'b'], value:2},
+                {path: [0, 'c'], value:3}
+            ]);
+        });
+
+        it ( 'should match all elements of an array', () => {
+            const results = match([ 1, 2, 3 ]);
+            expect(results).to.deep.equal([
+                {path: [0, 0], value:1},
+                {path: [0, 1], value:2},
+                {path: [0, 2], value:3}
+            ]);
+        });
+
+        it ( 'should also flatten arrays', () => {
+            const results = match([[ 1, 2, 3 ]]);
+            expect(results).to.deep.equal([
+                {path: [0, 0], value: [1,2,3]},
+                {path: [0, 0, 0], value:1},
+                {path: [0, 0, 1], value:2},
+                {path: [0, 0, 2], value:3}
+            ]);
+        });
+
+        it( 'should also flatten objects', () => {
+            const results = match({a: {b: 42}, c:[ 1, 2, 3 ]});
+            expect(results).to.deep.equal([
+                {path: [0, 'a'], value: {b: 42}},
+                {path: [0, 'c'], value: [1,2,3]},
+                {path: [0, 'a', 'b'], value: 42},
+                {path: [0, 'c', 0], value: 1},
+                {path: [0, 'c', 1], value: 2},
+                {path: [0, 'c', 2], value: 3}
+            ]);
+        });
+
+    });
+
 
     describe('A slice selector', () => {
         const match = matcher([$, new jp.Slice(1,4,2)]);

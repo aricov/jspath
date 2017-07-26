@@ -122,7 +122,7 @@ export const compileComponent = (comp: ast.Component): Matcher => {
         case 'slice':
             return Matchers.slice(comp.start, comp.end, comp.step);
         case 'all':
-            return Matchers.all;
+            return Matchers.all(comp.descendants);
         case 'filter':
             const expr = compileExpression(comp.filter);
             return Matchers.filter(expr);

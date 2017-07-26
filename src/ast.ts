@@ -12,6 +12,7 @@ export type Scope = RootScope | RelativeScope
 
 export class All {
     readonly type = 'all';
+    constructor(public readonly descendants = false) {}
 }
 
 export class Element {

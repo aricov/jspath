@@ -30,27 +30,33 @@ absolute_scope = '$' scope_index:(int)? { return new ast.RootScope(scope_index |
 relative_scope = '^' scope_index:(int)? { return new ast.RelativeScope(scope_index || 1 ); } 
 
 path_comp 
-  = path_comp_desc
-  / path_comp_child 
-  / path_comp_sub
+  = path_comp_simple_desc
+  / path_comp_simple_child 
+  / path_comp_canon_desc
+  / path_comp_canon_child
 
-path_comp_desc = '..' name:identifier { return new ast.Named([name], true); }
+path_comp_simple_desc = '..' name:identifier { return new ast.Named([name], true); }
 
-path_comp_child = '.' name:identifier { return new ast.Named([name]); }
+path_comp_simple_child = '.' name:identifier { return new ast.Named([name]); }
 
-path_comp_sub = '[' _ sub:path_sub _ ']' { return sub; }
+path_comp_canon_desc = '[[' _ spec:path_spec_desc _ ']]' { return spec; }
 
+path_comp_canon_child = '[' _ spec:path_spec_child _']' { return spec; }
 
-path_sub 
+path_spec_child
   = '*' { return new ast.All(); }
   / s:slice { return new ast.Slice(s.start, s.end, s.step); } 
   / l:sint_list { return new ast.Elements(l); }
   / i:sint { return new ast.Elements([i]); }
   / l:name_list { return new ast.Named(l); }
-  / '[' _ s:qstring _ ']' { return new ast.Named([s], true); }
-  / '[' _ l:name_list _ ']' { return new ast.Named(l, true); }
   / s:qstring { return new ast.Named([s]); }
-  / '?' __ expr:expr_or { return {type: 'filter', expr}; }
+  / '?' __ expr:expr_or { return {type: 'filter', expr, descendants: false}; }
+
+path_spec_desc
+  = '*' { return new ast.All(true); }
+  / _ l:name_list _ { return new ast.Named(l, true); }
+  / _ s:qstring _ { return new ast.Named([s], true); }
+  / '?' __ expr:expr_or { return {type: 'filter', expr, descendants: true}; }
 
 slice
   = start:sint? ':' end:sint? step:(':' v:sint? { return v || undefined; })? {

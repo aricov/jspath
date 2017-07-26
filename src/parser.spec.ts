@@ -56,9 +56,11 @@ describe('Parser: ', () => {
 
         test_comp('[1,2,3]', {type: 'elements', indices:[1,2,3]});
 
-        test_comp('[*]', {type: 'all'});
+        test_comp('[*]', {type: 'all', descendants: false});
 
         test_comp('..hello', {type: 'named', descendants: true, names: ['hello']});
+
+        test_comp('[[*]]', {type: 'all', descendants: true});
 
         test_comp('[["Hello, World"]]', {type: 'named', descendants: true, names: ['Hello, World']});
 
@@ -66,7 +68,8 @@ describe('Parser: ', () => {
 
         test_comp('[? .value is 3]', 
             {
-                type: 'filter', 
+                type: 'filter',
+                descendants: false, 
                 expr: {
                     type: 'binary',
                     op: 'is',
@@ -85,6 +88,7 @@ describe('Parser: ', () => {
         test_comp('[? .value in `[1,2,3,5]]',
             {
                 type: 'filter', 
+                descendants: false, 
                 expr: {
                     type: 'binary',
                     op: 'in',
@@ -122,7 +126,7 @@ describe('Parser: ', () => {
             expect(parser.parse('$..books[? @.category is $.selectedCategory]')).to.deep.equal([
                 {type: 'root', index: 0},
                 {type: 'named', descendants: true, names: ['books']},
-                {type: 'filter', expr: {
+                {type: 'filter', descendants: false, expr: {
                     type: 'binary',
                     op: 'is',
                     neg: false,
