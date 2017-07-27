@@ -18,10 +18,10 @@ export const Desc = {
 
 export const Expr = {
     is: (lhs: ast.Term, rhs: ast.Term) => new ast.BinaryExpression('is', false, lhs, rhs),
-    path: (p: ast.Path ) => new ast.PathTerm(p),
+    path: (...p: ast.Path ) => new ast.PathTerm(p),
     value: (v: any) => new ast.ValueTerm(v),
     not : {
-        is: (lhs: ast.Term, rhs: ast.Term) => new ast.BinaryExpression('is', false, lhs, rhs),    
+        is: (lhs: ast.Term, rhs: ast.Term) => new ast.BinaryExpression('is', true, lhs, rhs),
     },
     or: (lhs: ast.Expression, rhs: ast.Expression) => new ast.OrGroup(lhs,rhs),
     and: (lhs: ast.Expression, rhs: ast.Expression) => new ast.AndGroup(lhs,rhs)

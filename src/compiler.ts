@@ -4,7 +4,10 @@ import { Matchers, PathMatcher, Matcher, Match, MatchPath } from './matcher';
 type Operator = (lhs: any, rhs?:any) => boolean;
 
 export const operators:{[name:string]: Operator} = {
-    is : (lhs: any, rhs: any) => lhs === rhs
+    is : (lhs: any, rhs: any) => {
+        if ( lhs === undefined || rhs === undefined ) return false; // Undefined typically means no match. 
+        return (lhs === rhs);
+    }
 };
 
 export const compileValueTerm = (value: any[]) => (scopes: any[]) => value;
