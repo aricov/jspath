@@ -3,18 +3,20 @@ import { Matchers, PathMatcher, Matcher, Match, MatchPath } from './matcher';
 
 type Operator = (lhs: any, rhs?:any) => boolean;
 
-const operators:{[name:string]: Operator} = {};
+export const operators:{[name:string]: Operator} = {
+    is : (lhs: any, rhs: any) => lhs === rhs
+};
 
 export const compileValueTerm = (value: any[]) => (scopes: any[]) => value;
 
-export const compilePathTerm = (path: ast.Path) => {
+export const compilePathTerm = (path: ast.Path): (scopes: any[])=>any => {
     const matcher = compilePath(path);
     
     if ( !matcher.multi ) {
-        // For single matches we need to extract the first match value or return udefined when there were no matches. 
+        // For single matches we need to extract the first match value or return undefined when there were no matches. 
         return (scopes: any[]) => {
             const matches = matcher.match(scopes);
-            return matches.length > 0 ? matches[0] : undefined;
+            return matches.length > 0 ? matches[0].value : undefined;
         };
     }
 
@@ -47,6 +49,7 @@ export const compileBinaryExpression = (expr: ast.BinaryExpression): CompiledExp
     const operator = operators[expr.op];
     const lhs = compileTerm(expr.lhs);
     const rhs = compileTerm(expr.rhs);
+
     if ( expr.neg ) {
         return (scopes:any[]) => !operator(lhs(scopes), rhs(scopes));
     }
@@ -125,7 +128,7 @@ export const compileComponent = (comp: ast.Component): Matcher => {
             return Matchers.all(comp.descendants);
         case 'filter':
             const expr = compileExpression(comp.filter);
-            return Matchers.filter(expr);
+            return Matchers.filter(expr, comp.descendants);
         default:
             return Matchers.none(true);
     }

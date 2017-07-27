@@ -1,13 +1,18 @@
 import * as jp from './ast';
-import { compilePath } from './compiler';
+import { compilePath, compileExpression, compileTerm } from './compiler';
 import { expect } from 'chai';
 
 const matcher = (path: jp.Path) => (scope: any) => compilePath(path).match([scope]); 
 
+export const _ = new jp.RelativeScope(0);
+
 describe('Matcher: ', () => {
 
     const $ = new jp.RootScope();
+
     const child = {
+        named : (name:string) => new jp.Named([name]),
+        filter: (expr: jp.Expression) => new jp.Filter(expr, false),
         prop: new jp.Named(['prop']),
         length: new jp.Named(['length']),
         all:  new jp.All()
@@ -18,6 +23,10 @@ describe('Matcher: ', () => {
         length: new jp.Named(['length'], true),
         all: new jp.All(true)
     };
+
+    const path = (...p:jp.Path) => new jp.PathTerm(p);
+
+    const Is = (lhs: any, rhs: any) => new jp.BinaryExpression('is', false, lhs, rhs);
 
     describe('The root path ($)', () => {
         const path = [$];
@@ -292,5 +301,62 @@ describe('Matcher: ', () => {
                 {path: [0, 3], value: 'd'}
             ]);
         });
+    });
+
+   describe('Expressions ', () => {
+        const expr = Is(new jp.ValueTerm(5), new jp.ValueTerm(5));
+        const flt = compileExpression(expr);
+
+        it('should compile to a function', () => {
+            const res = flt([{}]);
+            expect(res).to.eq(true);
+        });
+
+        it('should evalutate on a property ', () => {
+            const expr = Is(path($, child.named('c')), new jp.ValueTerm(5));
+            const flt = compileExpression(expr);
+            expect(flt([{a:2, b:3, c:5}])).to.eq(true);
+        });
+    });
+
+    describe('A child filter', () => {
+        const expr = new jp.BinaryExpression(
+            'is', 
+            false, 
+            new jp.PathTerm([{type: 'root', index: 0}]),
+            new jp.ValueTerm(5)
+        );
+        
+        const match = matcher([$, new jp.Filter(expr, false)]);
+
+        it ('pathMatcher', ()=> {
+            const p = [$, child.named('c')];
+            const pathMatcher = compilePath(p);
+            const pathTerm = compileTerm(path(...p));
+            const source = {a: 2,b:3,c:5,d:7,e:11,f:13};
+            
+            expect(pathMatcher.match([source])).to.deep.equal([{ path: [0, 'c'], value: 5}]);
+            expect(pathTerm([source])).to.eq(5);
+        });
+
+        it ('should match a specific field by value', () => {
+            
+            const match = matcher([
+                $, 
+                child.filter( Is(path($, child.named('c')), new jp.ValueTerm(5)) )
+            ]);
+
+            expect(match([{a: 2,b:3,c:5,d:7,e:11,f:13}])).to.deep.equal([
+                {path: [0, 'c'], value: 5}
+            ]);
+        });
+
+
+        it ('should match a value in an array', () => {
+            expect(match([2,3,5,7,11,13])).to.deep.equal([
+                {path: [0, 2], value: 5}
+            ]);
+        });
+    
     });
 });

@@ -103,6 +103,44 @@ describe('Parser: ', () => {
                     }
                 }
         });
+
+        test_comp('[[? .value is 3]]', 
+            {
+                type: 'filter',
+                descendants: true, 
+                expr: {
+                    type: 'binary',
+                    op: 'is',
+                    neg: false,
+                    lhs: {
+                        type: 'path',
+                        value: [{type: 'relative', index: 0}, {type: 'named', descendants: false, names:['value']}]
+                    },
+                    rhs: {
+                        type: 'value',
+                        value: 3 
+                    }
+                }
+            });
+
+        test_comp('[[? .value in [1,2,3,5] ]]',
+            {
+                type: 'filter', 
+                descendants: true, 
+                expr: {
+                    type: 'binary',
+                    op: 'in',
+                    neg: false,
+                    lhs: {
+                        type: 'path',
+                        value: [{type: 'relative', index: 0}, {type: 'named', descendants: false, names: ['value']}]
+                    },
+                    rhs: {
+                        type: 'value',
+                        value: [1,2,3,5]
+                    }
+                }
+        });
     });
 
     describe('Various combinations:', () => {
@@ -148,6 +186,21 @@ describe('Parser: ', () => {
 
     describe('Expressions', () => {
         describe('Quoted', () => {
+            it ( '1 is 1', () => {
+                 const results = parser.parse(
+                    '1 is 1', 
+                    {startRule: 'expr'}
+                );
+
+                expect(results).to.deep.equal({
+                    type: 'binary',
+                    op: 'is',
+                    neg: false,
+                    lhs: { type: 'value', value: 1},
+                    rhs: { type: 'value', value: 1}
+                })
+            });
+
             it ( '$.code is `5', () => {
                 const results = parser.parse(
                     '$.code is `5', 

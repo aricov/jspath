@@ -229,24 +229,63 @@ export const filterChildren = (scopes: any[], source: any, filter:(childscopes: 
         .filter(m => filter([...scopes, m.value]));
 };
 
+export const filterDescendants = (scopes: any[], source: any, filter:(childscopes: any[])=>boolean): Match[] => {
+    switch ( typeof source ) {
+        case 'undefined':
+        case 'boolean':
+        case 'number':
+        case 'string':
+        case 'symbol':
+        case 'function':
+            return [];
+    }
+
+    if ( source === null ) // typeof null === 'object' :( 
+        return [];
+
+    const children = filterChildren(scopes, source, filter);
+
+    if ( Array.isArray(source) ) {
+        return source.reduce(
+            (matches, elt, index) => {
+                const sub = filterDescendants(scopes, elt, filter)
+                    .map( match => ({...match, path: [index, ...match.path]}));
+                return [ ...matches, ...sub]
+            },
+            children);
+    }
+
+    return Object.keys(source).reduce(
+        (matches, key) => {
+            const sub = filterDescendants(scopes, source[key], filter)
+                .map( match => ({...match, path: [key, ...match.path]}));
+            return [ ...matches, ...sub]
+        },
+        children);
+};
+
 const MULTI = true;
 
 export const Matchers = {
-    filter: (flt: (x:any[])=>boolean) => new Matcher((scopes: any[], source: any) => filterChildren(scopes, source, flt), true),
-    elements: (indices: number[]) => new Matcher((scopes: any[], source: any) => matchIndices(source, indices), MULTI),
-    slice: (start?: number, end?: number, step?:number) => new Matcher((scopes: any[], source:any) => matchSlice(source, start, end, step), true),
-    none: (multi: boolean) => new Matcher((scopes: any[], source: any) => [], multi),
-
-    named: (names: string[], descendants: boolean) => {
-        const multi = names.length > 1;
-        if ( descendants ) 
-            return new Matcher((scopes: any[], source: any) => matchDescendants(source, names), multi);
-        else 
-            return new Matcher((scopes: any[], source: any) => matchChildNames(source, names), multi);
-    },
     root: (index: number) => new Matcher((scopes: any[], source: any) => matchRoot(scopes, index)),
     relative: (index: number) => new Matcher((scopes: any[], source: any) => matchRelative(scopes, index)),
+
     all: (descendants: boolean) => descendants ? 
         new Matcher((scopes: any[], source:any) => matchAllDescendants(source)) :
-        new Matcher((scopes: any[], source:any) => matchAllChildren(source))
+        new Matcher((scopes: any[], source:any) => matchAllChildren(source)),
+
+    named: (names: string[], descendants: boolean) => descendants ?
+        new Matcher((scopes: any[], source: any) => matchDescendants(source, names), names.length > 1):
+        new Matcher((scopes: any[], source: any) => matchChildNames(source, names), names.length > 1),
+
+    elements: (indices: number[]) => 
+        new Matcher((scopes: any[], source: any) => matchIndices(source, indices), MULTI),
+    slice: (start?: number, end?: number, step?:number) => 
+        new Matcher((scopes: any[], source:any) => matchSlice(source, start, end, step), true),
+        
+    filter: (flt: (x:any[])=>boolean, descendants: boolean) => descendants ?
+        new Matcher((scopes: any[], source: any) => filterDescendants(scopes, source, flt), true):
+        new Matcher((scopes: any[], source: any) => filterChildren(scopes, source, flt), true),
+
+    none: (multi: boolean) => new Matcher((scopes: any[], source: any) => [], multi)
 }
