@@ -1,5 +1,5 @@
-import { compileExpression } from './compiler';
-import { Expr, $, _, Child } from './builder';
+import { compileExpression, compilePath } from './compiler';
+import { Expr, $, _, Child, Desc } from './builder';
 import { expect } from 'chai';
 
 describe('Compiler', () => {
@@ -117,5 +117,105 @@ describe('Compiler', () => {
                 expect(fn([ {k: {a: 42}, l:{b: 42}} ])).false;
             });
         });
+    });
+
+    describe(' - Filters', () => {
+        it ('should find an element of an array by numeric value', () => {
+            const expr = Expr.is(Expr.path(_), Expr.value(42));
+            const compiled = compilePath([$, Child.filter(expr)]);
+            expect(compiled.multi).true;
+            expect(compiled.match([ [40,41,42,43] ])).to.deep.equal([{
+                path: [0, 2],
+                value: 42
+            }]);
+        });
+
+        it ('should find multiple elements of an array by numeric value', () => {
+            const expr = Expr.is(Expr.path(_), Expr.value(42));
+            const compiled = compilePath([$, Child.filter(expr)]);
+            expect(compiled.multi).true;
+            expect(compiled.match([ [42,41,42,42,43] ])).to.deep.equal([{
+                path: [0, 0],
+                value: 42
+            },{
+                path: [0, 2],
+                value: 42
+            },{
+                path: [0, 3],
+                value: 42
+            }]);
+        });
+
+        it ('should find an element of an array by string value', () => {
+            const expr = Expr.is(Expr.path(_), Expr.value('goodbye'));
+            const compiled = compilePath([$, Child.filter(expr)]);
+            expect(compiled.multi).true;
+            expect(compiled.match([ ['hello', 'world', 'goodbye', 'cruel', 'world'] ])).to.deep.equal([{
+                path: [0, 2],
+                value: 'goodbye'
+            }]);
+        });
+
+        it ('should find an element of an array by its child property value', () => {
+            const expr = Expr.is(Expr.path(_, Child.named('a')), Expr.value(42));
+            const compiled = compilePath([$, Child.filter(expr)]);
+            expect(compiled.multi).true;
+            expect(compiled.match([ [{'a': 40}, {'a': 41}, {'a': 42}, {'a': 43}, {'a':44}] ])).to.deep.equal([{
+                path: [0, 2],
+                value: {'a': 42}
+            }]);
+        });
+
+        it ('should find a child of an object by its child property value', () => {
+            const expr = Expr.is(Expr.path(_, Child.named('a')), Expr.value(42));
+            const compiled = compilePath([$, Child.filter(expr)]);
+            expect(compiled.multi).true;
+            expect(compiled.match([ {'A': {'a': 40}, 'B': {'a': 41}, 'C': {'a': 42}, 'D': {'a': 43}, 'E': {'a':44}} ]))
+                .to.deep.equal(
+                    [{
+                        path: [0, 'C'],
+                        value: {'a': 42}
+                    }]
+                );
+        });
+        
+        it ('should find multiple chidlren of an object by their child property value', () => {
+            const expr = Expr.is(Expr.path(_, Child.named('a')), Expr.value(42));
+            const compiled = compilePath([$, Child.filter(expr)]);
+            expect(compiled.multi).true;
+            expect(compiled.match([ {'A': {'a': 42}, 'B': {'a': 41}, 'C': {'a': 42}, 'D': {'a': 43}, 'E': {'a':42}} ]))
+                .to.deep.equal(
+                    [{
+                        path: [0, 'A'],
+                        value: {'a': 42}
+                    },{
+                        path: [0, 'C'],
+                        value: {'a': 42}
+                    },{
+                        path: [0, 'E'],
+                        value: {'a': 42}
+                    }]
+                );
+        });
+
+        it ('should find descnedants of an object by their child property value', () => {
+            const expr = Expr.is(Expr.path(_, Child.named('a')), Expr.value(42));
+            const compiled = compilePath([$, Desc.filter(expr)]);
+            expect(compiled.multi).true;
+            expect(compiled.match([ {'A': { 'x': {'a': 42}}, 'B': {'x': {'a': 41}, 'y': {'a': 42}}, 'C': {'a': 43}, 'D': {'a':42}} ]))
+                .to.deep.equal(
+                    [{
+                        path: [0, 'D'],
+                        value: {'a': 42}
+                    },{
+                        path: [0, 'A', 'x'],
+                        value: {'a': 42}
+                    },{
+                        path: [0, 'B', 'y'],
+                        value: {'a': 42}
+                    }]
+                );
+        });
+
     });
 });
