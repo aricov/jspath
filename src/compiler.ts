@@ -5,23 +5,23 @@ type Operator = (lhs: any, rhs?:any) => boolean;
 
 const operators:{[name:string]: Operator} = {};
 
-export const compileValueTerm = (value: any) => (source: any) => value;
+export const compileValueTerm = (value: any[]) => (scopes: any[]) => value;
 
 export const compilePathTerm = (path: ast.Path) => {
     const matcher = compilePath(path);
     
     if ( !matcher.multi ) {
         // For single matches we need to extract the first match value or return udefined when there were no matches. 
-        return (source: any) => {
-            const matches = matcher.match(source);
+        return (scopes: any[]) => {
+            const matches = matcher.match(scopes);
             return matches.length > 0 ? matches[0] : undefined;
         };
     }
 
-    return (source: any) => matcher.match(source).map(m => m.value);
+    return (scopes: any[]) => matcher.match(scopes).map(m => m.value);
 };
 
-export const compileTerm = (term: ast.Term) => (source: any): any => {
+export const compileTerm = (term: ast.Term): (scopes: any[])=>any => {
     switch ( term.type ) {
         case 'path': return compilePathTerm(term.value);
         case 'value': return compileValueTerm(term.value);
@@ -38,9 +38,9 @@ export const compileUnaryExpression = (expr: ast.UnaryExpression): CompiledExpre
     const predicate = operators[expr.op];
     const lhs = compileTerm(expr.lhs);
     if ( expr.neg ) {
-        return (source:any) => !predicate(lhs(source));
+        return (scopes:any[]) => !predicate(lhs(scopes));
     }
-    return (source: any) => predicate(lhs(source));
+    return (scopes: any[]) => predicate(lhs(scopes));
 };
 
 export const compileBinaryExpression = (expr: ast.BinaryExpression): CompiledExpression => {
@@ -48,21 +48,21 @@ export const compileBinaryExpression = (expr: ast.BinaryExpression): CompiledExp
     const lhs = compileTerm(expr.lhs);
     const rhs = compileTerm(expr.rhs);
     if ( expr.neg ) {
-        return (source:any) => !operator(lhs(source), rhs(source));
+        return (scopes:any[]) => !operator(lhs(scopes), rhs(scopes));
     }
-    return (source: any) => operator(lhs(source), rhs(source));
+    return (scopes: any[]) => operator(lhs(scopes), rhs(scopes));
 };
 
 export const compileOrGroup = (expr: ast.OrGroup): CompiledExpression => {
     const lhs = compileExpression(expr.lhs);
     const rhs = compileExpression(expr.rhs);
-    return (source:any) => lhs(source) || rhs(source);
+    return (scopes:any[]) => lhs(scopes) || rhs(scopes);
 };
 
 export const compileAndGroup = (expr: ast.AndGroup): CompiledExpression => {
     const lhs = compileExpression(expr.lhs);
     const rhs = compileExpression(expr.rhs);
-    return (source:any) => lhs(source) && rhs(source);
+    return (scopes:any[]) => lhs(scopes) && rhs(scopes);
 };
 
 export const compileExpression = (expr: ast.Expression): CompiledExpression => {

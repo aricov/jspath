@@ -18,8 +18,8 @@ export interface Match {
 }
 
 export const matchRoot = (scopes: any[], index = 0) : Match[] => {
-    if ( typeof scopes === 'undefined' ) return [];
-    if ( scopes.length === 0 ) return [];
+    if ( scopes === undefined || scopes === null ) return [];
+    if ( index < 0 || index >= scopes.length ) return [];
 
     return [{
         path: [index],
@@ -27,17 +27,9 @@ export const matchRoot = (scopes: any[], index = 0) : Match[] => {
     }];
 };
 
-export const matchRelative = (scopes: any[], index = 1) : Match[] => {
-    if ( typeof scopes === 'undefined' ) return [];
-    if ( scopes.length === 0 ) return [];
-
-    const actual = scopes.length -1;
-
-    return [{
-        path: [actual],
-        value: scopes[scopes.length - index]
-    }];
-    
+export const matchRelative = (scopes: any[], index = 0) : Match[] => {
+    if ( scopes === undefined || scopes === null ) return [];
+    return matchRoot(scopes, scopes.length -1 -index);    
 }
 
 export const matchIndices = (source: any, indices: number[]): Match[] => {
