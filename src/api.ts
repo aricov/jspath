@@ -1,6 +1,6 @@
 import { PathMatcher } from './matcher';
 
-export { PathMatcher, Match, MatchPath } from './matcher';
+export { PathMatcher } from './matcher';
 
 export {  CompiledExpression } from './compiler';
 

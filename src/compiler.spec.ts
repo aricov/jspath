@@ -117,6 +117,42 @@ describe('Compiler', () => {
                 expect(fn([ {k: {a: 42}, l:{b: 42}} ])).false;
             });
         });
+
+        describe('@..c is 42', () => {
+            const expr = Expr.is(Expr.path(_, Desc.named('c')), Expr.value(42));
+            const fn = compileExpression(expr);
+            it('should match on an object with a descendant property named "c" of 42 ', () => {
+                expect(fn([ {a: {b: {c: 42}}} ])).true;
+            });
+        });
+
+        describe('@..c is 42', () => {
+            const expr = Expr.is(Expr.path(_, Desc.named('c')), Expr.value(42));
+            const fn = compileExpression(expr);
+            it('should match on an object with more than one descendant property named "c", when the first one is 42 ', () => {
+                // There may be a need for all/some qualifiers in front of expresssions,
+                // to disambiguate the behaviour of "multi" paths
+                // - `all @..c is 42` or with a clever alias `all @..c are 42
+                // - `some @..c is 42`
+                // We may also need them on the right hand side ...
+                expect(fn([ {a: {b: {c: 42}, d: {c: 42}} } ]), 'all').true;
+                expect(fn([ {a: {b: {c: 42}, d: {c: 41}} } ]), 'first').true;
+                expect(fn([ {a: {b: {c: 41}, d: {c: 42}} } ]), 'second').false;
+            });
+        });
+
+        describe('@[[c,d]] is 42', () => {
+            const expr = Expr.is(Expr.path(_, Desc.named('c', 'd')), Expr.value(42));
+            const fn = compileExpression(expr);
+            it('should fail in all cases', () => {
+                expect(fn([ {a: {b: {c: 42}, d: 42}} ])).false;
+                expect(fn([ {a: {b: {c: 41}, d: 42}} ])).false;
+                expect(fn([ {a: {b: {c: 42}, d: 41}} ])).false;
+                expect(fn([ {a: {b: {c: 41}, d: 41}} ])).false;
+                expect(fn([ {a: {b: {c: 42}}} ])).false;
+                expect(fn([ {a: {d: 42}} ])).false;
+            });
+        });
     });
 
     describe(' - Filters', () => {

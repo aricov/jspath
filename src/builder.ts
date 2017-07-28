@@ -7,6 +7,7 @@ export const Child = {
     all: new ast.All(false),
     named: (...names:string[]) => new ast.Named(names, false),
     at: (...indices:number[]) => new ast.Elements(indices),
+    slice: (start:number, end:number, step:number) => new ast.Slice(start, end, step),
     filter: (expr: ast.Expression) => new ast.Filter(expr, false)
 };
 

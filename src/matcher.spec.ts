@@ -1,28 +1,11 @@
-import * as jp from './ast';
+import { Path } from './ast';
 import { compilePath } from './compiler';
+import { Child, Desc, $ } from './builder';
 import { expect } from 'chai';
 
-const matcher = (path: jp.Path) => (scope: any) => compilePath(path).match([scope]); 
-
-export const _ = new jp.RelativeScope(0);
+const matcher = (path: Path) => (scope: any) => compilePath(path).match([scope]); 
 
 describe('Matcher: ', () => {
-
-    const $ = new jp.RootScope();
-
-    const child = {
-        named : (name:string) => new jp.Named([name]),
-        filter: (expr: jp.Expression) => new jp.Filter(expr, false),
-        prop: new jp.Named(['prop']),
-        length: new jp.Named(['length']),
-        all:  new jp.All()
-    };
-
-    const desc = {
-        prop: new jp.Named(['prop'], true),
-        length: new jp.Named(['length'], true),
-        all: new jp.All(true)
-    };
 
     describe('The root path ($)', () => {
         const path = [$];
@@ -67,8 +50,8 @@ describe('Matcher: ', () => {
     });
 
     describe('A child path ($.prop)', () => {
-        const match = matcher([$, child.prop]);
-        const matchLength = matcher([$, child.length]);
+        const match = matcher([$, Child.named('prop')]);
+        const matchLength = matcher([$, Child.named('length')]);
 
         it ( 'should match an object with the right property', () => {
             const results = match({ prop: 42 });
@@ -103,7 +86,7 @@ describe('Matcher: ', () => {
     });
 
     describe('A descendant path ($..prop)', () => {
-        const match = matcher([$, desc.prop]);
+        const match = matcher([$, Desc.named('prop')]);
         //const matchLength = matcher([$, desc.length]);
 
         it ( 'should match a child property', () => { 
@@ -159,7 +142,7 @@ describe('Matcher: ', () => {
     });
 
     describe('A child union path for two properties ($["a", "b"])', () => {
-        const match = matcher([$, new jp.Named(['a', 'b'])]);
+        const match = matcher([$, Child.named('a', 'b')]);
         it ( 'should match both properties', () => {
             const results = match({ a:1, b:2, c: 3 });
             expect(results).to.deep.equal([
@@ -176,7 +159,7 @@ describe('Matcher: ', () => {
     });
         
     describe('An index union path for two indices ($[0, 2])', () => {
-        const match = matcher([$, new jp.Elements([0, 2])]);
+        const match = matcher([$, Child.at(0, 2)]);
         it ( 'should find the first and third element of a four element array', () => {
             const results = match([1, 2, 3, 4]);
             expect(results).to.deep.equal([
@@ -193,7 +176,7 @@ describe('Matcher: ', () => {
     });
     
     describe('A path to all properties ($.* or $[*])', () => {
-        const match = matcher([$, child.all]);
+        const match = matcher([$, Child.all]);
         it ( 'should match all elements of an array', () => {
             const results = match([ 1, 2, 3 ]);
             expect(results).to.deep.equal([
@@ -224,7 +207,7 @@ describe('Matcher: ', () => {
             ]);
         });
         it ( 'should flatten recursive matches', () => {
-            const matchDeep = matcher([$, child.prop, child.all, new jp.Named(['a']), child.all]);
+            const matchDeep = matcher([$, Child.named('prop'), Child.all, Child.named('a'), Child.all]);
             const results = matchDeep({
                 prop: [{
                     a: [1, 2, 3],
@@ -245,7 +228,7 @@ describe('Matcher: ', () => {
     });
 
     describe('A path to all descendants ($[**])', () => {
-        const match = matcher([$, desc.all]);
+        const match = matcher([$, Desc.all]);
         it('should flatten a simple object', () => {
             const results = match({ a:1, b:2, c:3 });
             expect(results).to.deep.equal([
@@ -290,7 +273,7 @@ describe('Matcher: ', () => {
 
 
     describe('A slice selector', () => {
-        const match = matcher([$, new jp.Slice(1,4,2)]);
+        const match = matcher([$, Child.slice(1,4,2)]);
         it ( 'Should extract elements 1 and 3', () => {
             expect(match(['a','b','c','d','e','f','g'])).to.deep.equal([
                 {path: [0, 1], value: 'b'},

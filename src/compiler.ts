@@ -1,7 +1,12 @@
 import * as ast from './ast';
-import { Matchers, PathMatcher, Matcher, Match, MatchPath } from './matcher';
+import { Matchers, Matcher, Match, MatchPath } from './matcher';
 
 type Operator = (lhs: any, rhs?:any) => boolean;
+
+export interface PathMatcher {
+    match: (scopes: any[]) => Match[];
+    multi: boolean;
+}
 
 export const operators:{[name:string]: Operator} = {
     is : (lhs: any, rhs: any) => {
