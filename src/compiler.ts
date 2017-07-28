@@ -12,6 +12,14 @@ export const operators:{[name:string]: Operator} = {
     is : (lhs: any, rhs: any) => {
         if ( lhs === undefined || rhs === undefined ) return false; // Undefined typically means no match. 
         return (lhs === rhs);
+    },
+
+    in: (lhs: any, rhs: any) => {
+        if ( lhs === undefined || rhs === undefined || rhs === null) return false;
+        if ( Array.isArray(rhs) ) {
+            return rhs.indexOf(lhs) > -1;
+        }
+        return false;
     }
 };
 

@@ -48,7 +48,7 @@ export const descendants = (scopes: any[], source: any, filter:(childscopes: any
     if ( Array.isArray(source) ) {
         return source.reduce(
             (matches, elt, index) => {
-                const sub = descendants(scopes, elt, filter)
+                const sub = descendants([...scopes, elt], elt, filter)
                     .map( match => ({...match, path: [index, ...match.path]}));
                 return [ ...matches, ...sub]
             },
@@ -57,7 +57,7 @@ export const descendants = (scopes: any[], source: any, filter:(childscopes: any
 
     return Object.keys(source).reduce(
         (matches, key) => {
-            const sub = descendants(scopes, source[key], filter)
+            const sub = descendants([...scopes, source[key]], source[key], filter)
                 .map( match => ({...match, path: [key, ...match.path]}));
             return [ ...matches, ...sub]
         },

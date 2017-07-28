@@ -21,15 +21,16 @@ export const Matchers = {
     relative: (index: number) => new Matcher((scopes: any[], source: any) => scope.relative(scopes, index)),
 
     all: (descendants: boolean) => descendants ? 
-        new Matcher((scopes: any[], source:any) => all.descendants(source)) :
-        new Matcher((scopes: any[], source:any) => all.children(source)),
+        new Matcher((scopes: any[], source:any) => all.descendants(source), MULTI) :
+        new Matcher((scopes: any[], source:any) => all.children(source), MULTI),
 
     named: (names: string[], descendants: boolean) => descendants ?
         new Matcher((scopes: any[], source: any) => named.descendants(source, names), names.length > 1):
         new Matcher((scopes: any[], source: any) => named.children(source, names), names.length > 1),
 
     elements: (indices: number[]) => 
-        new Matcher((scopes: any[], source: any) => elements.byIndex(source, indices), MULTI),
+        new Matcher((scopes: any[], source: any) => elements.byIndex(source, indices), indices.length > 1),
+
     slice: (start?: number, end?: number, step?:number) => 
         new Matcher((scopes: any[], source:any) => elements.slice(source, start, end, step), MULTI),
 
