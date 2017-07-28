@@ -1,7 +1,7 @@
 {
     "format" : "es",
     "dependencies" : {
-        "* as ast" : "./ast"
+        "{ Child, Desc, Term, Expr, Scope }" : "./builder"
     },
     "allowedStartRules": [
         "path",

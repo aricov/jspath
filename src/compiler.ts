@@ -135,7 +135,7 @@ export const compileComponent = (comp: ast.Component): Matcher => {
         case 'all':
             return Matchers.all(comp.descendants);
         case 'filter':
-            const expr = compileExpression(comp.filter);
+            const expr = compileExpression(comp.expr);
             return Matchers.filter(expr, comp.descendants);
         default:
             return Matchers.none(true);

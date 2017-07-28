@@ -40,7 +40,7 @@ export class Slice {
 
 export class Filter {
     readonly type = 'filter';
-    constructor(public readonly filter: Expression, public readonly descendants = false) {}
+    constructor(public readonly expr: Expression, public readonly descendants = false) {}
 } 
 
 export type Component = Scope | Named | Elements | Slice | All | Filter;

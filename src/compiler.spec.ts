@@ -1,30 +1,30 @@
 import { compileExpression, compilePath } from './compiler';
-import { Expr, $, _, Child, Desc } from './builder';
+import { Expr, $, _, Child, Desc, Term } from './builder';
 import { expect } from 'chai';
 
 describe('Compiler', () => {
 
     describe(' - Expressions:', () => {
         it('Tautology: 42 is 42', () => {
-            const expr = Expr.is(Expr.value(42), Expr.value(42));
+            const expr = Expr.is(Term.value(42), Term.value(42));
             const fn = compileExpression(expr);
             expect(fn([])).true;
         });
 
         it('Impossibility: 41 is 42', () => {
-            const expr = Expr.is(Expr.value(41), Expr.value(42));
+            const expr = Expr.is(Term.value(41), Term.value(42));
             const fn = compileExpression(expr);
             expect(fn([])).false;
         });
 
         it('Negate impossibility: not 41 is 42', () => {
-            const expr = Expr.not.is(Expr.value(41), Expr.value(42));
+            const expr = Expr.not.is(Term.value(41), Term.value(42));
             const fn = compileExpression(expr);
             expect(fn([])).true;
         });
 
         describe('$ is 42', () => {
-            const expr = Expr.is(Expr.path($), Expr.value(42));
+            const expr = Expr.is(Term.path($), Term.value(42));
             const fn = compileExpression(expr);
             it('should match a root value of 42', () => {
                 expect(fn([42])).true;
@@ -41,7 +41,7 @@ describe('Compiler', () => {
         });
 
         describe('@ is 42', () => {
-            const expr = Expr.is(Expr.path(_), Expr.value(42));
+            const expr = Expr.is(Term.path(_), Term.value(42));
             const fn = compileExpression(expr);
             it('should match a root value of 42', () => {
                 expect(fn([42])).true;
@@ -58,7 +58,7 @@ describe('Compiler', () => {
         });
 
         describe('@.prop is 42', () => {
-            const expr = Expr.is(Expr.path(_, Child.named('prop')), Expr.value(42));
+            const expr = Expr.is(Term.path(_, Child.named('prop')), Term.value(42));
             const fn = compileExpression(expr);
             it('should not match a root value of 42', () => {
                 expect(fn([42])).false;
@@ -78,7 +78,7 @@ describe('Compiler', () => {
 
 
         describe('@.a is @.b', () => {
-            const expr = Expr.is(Expr.path(_, Child.named('a')), Expr.path(_, Child.named('b')));
+            const expr = Expr.is(Term.path(_, Child.named('a')), Term.path(_, Child.named('b')));
             const fn = compileExpression(expr);
             it('should match an object with two equal numeric properties a and b', () => {
                 expect(fn([ {a: 42, b: 42} ])).true;
@@ -119,7 +119,7 @@ describe('Compiler', () => {
         });
 
         describe('@..c is 42', () => {
-            const expr = Expr.is(Expr.path(_, Desc.named('c')), Expr.value(42));
+            const expr = Expr.is(Term.path(_, Desc.named('c')), Term.value(42));
             const fn = compileExpression(expr);
             it('should match on an object with a descendant property named "c" of 42 ', () => {
                 expect(fn([ {a: {b: {c: 42}}} ])).true;
@@ -127,7 +127,7 @@ describe('Compiler', () => {
         });
 
         describe('@..c is 42', () => {
-            const expr = Expr.is(Expr.path(_, Desc.named('c')), Expr.value(42));
+            const expr = Expr.is(Term.path(_, Desc.named('c')), Term.value(42));
             const fn = compileExpression(expr);
             it('should match on an object with more than one descendant property named "c", when the first one is 42 ', () => {
                 // There may be a need for all/some qualifiers in front of expresssions,
@@ -142,7 +142,7 @@ describe('Compiler', () => {
         });
 
         describe('@[[c,d]] is 42', () => {
-            const expr = Expr.is(Expr.path(_, Desc.named('c', 'd')), Expr.value(42));
+            const expr = Expr.is(Term.path(_, Desc.named('c', 'd')), Term.value(42));
             const fn = compileExpression(expr);
             it('should fail in all cases', () => {
                 expect(fn([ {a: {b: {c: 42}, d: 42}} ])).false;
@@ -157,7 +157,7 @@ describe('Compiler', () => {
 
     describe(' - Filters', () => {
         it ('should find an element of an array by numeric value', () => {
-            const expr = Expr.is(Expr.path(_), Expr.value(42));
+            const expr = Expr.is(Term.path(_), Term.value(42));
             const compiled = compilePath([$, Child.filter(expr)]);
             expect(compiled.multi).true;
             expect(compiled.match([ [40,41,42,43] ])).to.deep.equal([{
@@ -167,7 +167,7 @@ describe('Compiler', () => {
         });
 
         it ('should find multiple elements of an array by numeric value', () => {
-            const expr = Expr.is(Expr.path(_), Expr.value(42));
+            const expr = Expr.is(Term.path(_), Term.value(42));
             const compiled = compilePath([$, Child.filter(expr)]);
             expect(compiled.multi).true;
             expect(compiled.match([ [42,41,42,42,43] ])).to.deep.equal([{
@@ -183,7 +183,7 @@ describe('Compiler', () => {
         });
 
         it ('should find an element of an array by string value', () => {
-            const expr = Expr.is(Expr.path(_), Expr.value('goodbye'));
+            const expr = Expr.is(Term.path(_), Term.value('goodbye'));
             const compiled = compilePath([$, Child.filter(expr)]);
             expect(compiled.multi).true;
             expect(compiled.match([ ['hello', 'world', 'goodbye', 'cruel', 'world'] ])).to.deep.equal([{
@@ -193,7 +193,7 @@ describe('Compiler', () => {
         });
 
         it ('should find an element of an array by its child property value', () => {
-            const expr = Expr.is(Expr.path(_, Child.named('a')), Expr.value(42));
+            const expr = Expr.is(Term.path(_, Child.named('a')), Term.value(42));
             const compiled = compilePath([$, Child.filter(expr)]);
             expect(compiled.multi).true;
             expect(compiled.match([ [{'a': 40}, {'a': 41}, {'a': 42}, {'a': 43}, {'a':44}] ])).to.deep.equal([{
@@ -203,7 +203,7 @@ describe('Compiler', () => {
         });
 
         it ('should find a child of an object by its child property value', () => {
-            const expr = Expr.is(Expr.path(_, Child.named('a')), Expr.value(42));
+            const expr = Expr.is(Term.path(_, Child.named('a')), Term.value(42));
             const compiled = compilePath([$, Child.filter(expr)]);
             expect(compiled.multi).true;
             expect(compiled.match([ {'A': {'a': 40}, 'B': {'a': 41}, 'C': {'a': 42}, 'D': {'a': 43}, 'E': {'a':44}} ]))
@@ -216,7 +216,7 @@ describe('Compiler', () => {
         });
         
         it ('should find multiple chidlren of an object by their child property value', () => {
-            const expr = Expr.is(Expr.path(_, Child.named('a')), Expr.value(42));
+            const expr = Expr.is(Term.path(_, Child.named('a')), Term.value(42));
             const compiled = compilePath([$, Child.filter(expr)]);
             expect(compiled.multi).true;
             expect(compiled.match([ {'A': {'a': 42}, 'B': {'a': 41}, 'C': {'a': 42}, 'D': {'a': 43}, 'E': {'a':42}} ]))
@@ -235,7 +235,7 @@ describe('Compiler', () => {
         });
 
         it ('should find descnedants of an object by their child property value', () => {
-            const expr = Expr.is(Expr.path(_, Child.named('a')), Expr.value(42));
+            const expr = Expr.is(Term.path(_, Child.named('a')), Term.value(42));
             const compiled = compilePath([$, Desc.filter(expr)]);
             expect(compiled.multi).true;
             expect(compiled.match([ {'A': { 'x': {'a': 42}}, 'B': {'x': {'a': 41}, 'y': {'a': 42}}, 'C': {'a': 43}, 'D': {'a':42}} ]))

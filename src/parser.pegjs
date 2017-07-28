@@ -16,8 +16,8 @@ path
 path_absolute = scope:absolute_scope comps:path_comp* { return [scope, ...comps]; }
 path_relative = scope:relative_scope comps:path_comp* { return [scope, ...comps]; }
 path_current  
-  = '@' comps:path_comp* { return [new ast.RelativeScope(0), ...comps]; }
-  / &'.' comps:path_comp* { return [new ast.RelativeScope(0), ...comps]; } 
+  = '@' comps:path_comp* { return [Scope.relative(0), ...comps]; }
+  / &'.' comps:path_comp* { return [Scope.relative(0), ...comps]; } 
   // Testing for the dot before attempting to match a non-scoped relative path removes the ambiguity with values,
   // as values cannot start with '.' but may very well start with '['].
 
@@ -26,8 +26,8 @@ expr = expr_or
 /*
  * Path structure
  */
-absolute_scope = '$' scope_index:(int)? { return new ast.RootScope(scope_index || 0 ); } 
-relative_scope = '^' scope_index:(int)? { return new ast.RelativeScope(scope_index || 1 ); } 
+absolute_scope = '$' scope_index:(int)? { return Scope.absolute(scope_index || 0 ); } 
+relative_scope = '^' scope_index:(int)? { return Scope.relative(scope_index || 1 ); } 
 
 path_comp 
   = path_comp_simple_desc
@@ -35,25 +35,25 @@ path_comp
   / path_comp_canon_desc
   / path_comp_canon_child
 
-path_comp_simple_desc = '..' name:identifier { return new ast.Named([name], true); }
+path_comp_simple_desc = '..' name:identifier { return Desc.named(name); }
 
-path_comp_simple_child = '.' name:identifier { return new ast.Named([name]); }
+path_comp_simple_child = '.' name:identifier { return Child.named(name); }
 
 path_comp_canon_desc = '[[' _ spec:path_spec_desc _ ']]' { return spec; }
 
 path_comp_canon_child = '[' _ spec:path_spec_child _']' { return spec; }
 
 path_spec_child
-  = '*' { return new ast.All(); }
-  / s:slice { return new ast.Slice(s.start, s.end, s.step); } 
-  / l:sint_list { return new ast.Elements(l); }
-  / l:name_list { return new ast.Named(l); }
-  / '?' __ expr:expr_or { return {type: 'filter', expr, descendants: false}; }
+  = '*' { return Child.all; }
+  / s:slice { return Child.slice(s.start, s.end, s.step); } 
+  / l:sint_list { return Child.at(...l); }
+  / l:name_list { return Child.named(...l); }
+  / '?' __ expr:expr_or { return Child.filter(expr); }
 
 path_spec_desc
-  = '*' { return new ast.All(true); }
-  / _ l:name_list _ { return new ast.Named(l, true); }
-   / '?' __ expr:expr_or { return {type: 'filter', expr, descendants: true}; }
+  = '*' { return Desc.all; }
+  / _ l:name_list _ { return Desc.named(...l); }
+  / '?' __ expr:expr_or { return Desc.filter(expr); }
 
 slice
   = start:sint? ':' end:sint? step:(':' v:sint? { return v || undefined; })? {
@@ -77,18 +77,14 @@ name_list
 /* Filter expression */
 
 expr_or
-  = left:expr_and __ OR __ right:expr_or {
-    return {
-      type: 'or',
-      lhs: left,
-      rhs: right
-    };
+  = lhs:expr_and __ OR __ rhs:expr_or {
+    return Expr.or(lhs, rhs);
   }
   / expr_and
 
 expr_and
   = lhs:expr_bool __ AND __  rhs:expr_and {
-    return new ast.AndGroup(lhs, rhs);
+    return Expr.and(lhs, rhs);
   }
   / expr_bool
 
@@ -99,22 +95,14 @@ expr_bool
 expr_simple
   = neg:'not 'i? lhs:expr_term __ op:identifier rhs:(__ t:expr_term { return t; })? {
     return rhs !== null
-      ? new ast.BinaryExpression(
-        op,
-        neg!==null,
-        lhs,
-        rhs
-      )
-      : new ast.UnaryExpression(
-        op,
-        neg!==null,
-        lhs
-      );
+      ? (neg !== null ? Expr.not.binary(op, lhs, rhs) : Expr.binary(op, lhs, rhs))
+      : (neg !== null ? Expr.not.unary(op, lhs) : Expr.unary(op, lhs)) 
+      ;
   }
  
 expr_term
-  = p:path { return new ast.PathTerm(p); } 
-  / '`'? v:value { return new ast.ValueTerm(v); }
+  = p:path { return Term.path(...p); } 
+  / '`'? v:value { return Term.value(v); }
 
 OR = 'or'i
 AND = 'and'i
