@@ -1,27 +1,11 @@
 import * as ast from './ast';
 import { Matchers, Matcher, Match, MatchPath } from './matcher';
-
-type Operator = (lhs: any, rhs?:any) => boolean;
+import { operators } from './operators';
 
 export interface PathMatcher {
     match: (scopes: any[]) => Match[];
     multi: boolean;
 }
-
-export const operators:{[name:string]: Operator} = {
-    is : (lhs: any, rhs: any) => {
-        if ( lhs === undefined || rhs === undefined ) return false; // Undefined typically means no match. 
-        return (lhs === rhs);
-    },
-
-    in: (lhs: any, rhs: any) => {
-        if ( lhs === undefined || rhs === undefined || rhs === null) return false;
-        if ( Array.isArray(rhs) ) {
-            return rhs.indexOf(lhs) > -1;
-        }
-        return false;
-    }
-};
 
 export const compileValueTerm = (value: any[]) => (scopes: any[]) => value;
 
