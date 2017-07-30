@@ -25,7 +25,7 @@ export const Matchers = {
         new Matcher((scopes: any[], source:any) => all.children(source), MULTI),
 
     named: (names: string[], descendants: boolean) => descendants ?
-        new Matcher((scopes: any[], source: any) => named.descendants(source, names), names.length > 1):
+        new Matcher((scopes: any[], source: any) => named.descendants(source, names), MULTI):
         new Matcher((scopes: any[], source: any) => named.children(source, names), names.length > 1),
 
     elements: (indices: number[]) => 

@@ -23,10 +23,16 @@ export const compilePathTerm = (path: ast.Path): (scopes: any[])=>any => {
     return (scopes: any[]) => matcher.match(scopes).map(m => m.value);
 };
 
-export const compileTerm = (term: ast.Term): (scopes: any[])=>any => {
+export interface CompiledTerm {
+    type: 'path' | 'value';
+    qualifier? : ast.PathQualifier;
+    value: (scopes: any[]) => any;
+};
+
+export const compileTerm = (term: ast.Term): CompiledTerm => {
     switch ( term.type ) {
-        case 'path': return compilePathTerm(term.value);
-        case 'value': return compileValueTerm(term.value);
+        case 'path': return { ...term, value: compilePathTerm(term.value)};
+        case 'value': return { ...term, value: compileValueTerm(term.value)};
     }
 };
 
@@ -36,24 +42,84 @@ export const negate = (expr: CompiledExpression): CompiledExpression  => {
     return (scopes: any[]) => !expr(scopes);
 };
 
+const asArray = (value: any): any[] => {
+    return Array.isArray(value) ? value : [];
+};
+
 export const compileUnaryExpression = (expr: ast.UnaryExpression): CompiledExpression => {
-    const predicate = operators[expr.op];
+    const operator = operators[expr.op];
+    const predicate = expr.neg ? (p: any) => !operator(p) : operator;
+
     const lhs = compileTerm(expr.lhs);
-    if ( expr.neg ) {
-        return (scopes:any[]) => !predicate(lhs(scopes));
+    switch ( lhs.qualifier ) {
+        case 'some': return (scopes: any[]) => asArray(lhs.value(scopes)).some(predicate);
+        case 'every': return (scopes: any[]) => asArray(lhs.value(scopes)).every(predicate);
+        default: return (scopes: any[]) => predicate(lhs.value(scopes)); 
     }
-    return (scopes: any[]) => predicate(lhs(scopes));
 };
 
 export const compileBinaryExpression = (expr: ast.BinaryExpression): CompiledExpression => {
     const operator = operators[expr.op];
+    const predicate = expr.neg ? (p: any) => !operator(p) : operator;
+    
     const lhs = compileTerm(expr.lhs);
     const rhs = compileTerm(expr.rhs);
 
-    if ( expr.neg ) {
-        return (scopes:any[]) => !operator(lhs(scopes), rhs(scopes));
-    }
-    return (scopes: any[]) => operator(lhs(scopes), rhs(scopes));
+    switch( lhs.qualifier ) {
+        case 'some': switch ( rhs.qualifier ) {
+            case 'some': return (scopes: any[]) => {
+                const left = asArray(lhs.value(scopes));
+                const right = asArray(rhs.value(scopes));
+                return left.some(l => right.some(r => predicate(l,r)));
+            };
+            case 'every': return (scopes: any[]) => {
+                const left = asArray(lhs.value(scopes));
+                const right = asArray(rhs.value(scopes));
+                return left.some(l => right.every(r => predicate(l,r)));
+            };
+            default : return (scopes: any[]) => {
+                const left = asArray(lhs.value(scopes));
+                const right = rhs.value(scopes);
+                return left.some(l => predicate(l,right));
+            }; 
+        }
+
+        case 'every': switch ( rhs.qualifier ) {
+            case 'some': return (scopes: any[]) => {
+                const left = asArray(lhs.value(scopes));
+                const right = asArray(rhs.value(scopes));
+                return left.every(l => right.some(r => predicate(l,r)));
+            };
+            case 'every': return (scopes: any[]) => {
+                const left = asArray(lhs.value(scopes));
+                const right = asArray(rhs.value(scopes));
+                return left.every(l => right.every(r => predicate(l,r)));
+            };
+            default : return (scopes: any[]) => {
+                const left = asArray(lhs.value(scopes));
+                const right = rhs.value(scopes);
+                return left.every(l => predicate(l,right));
+            }; 
+        }
+            
+        default: switch ( rhs.qualifier ) {
+            case 'some': return (scopes: any[]) => {
+                const left = lhs.value(scopes);
+                const right = asArray(rhs.value(scopes));
+                return right.some(r => predicate(left,r));
+            };
+            case 'every': return (scopes: any[]) => {
+                const left = lhs.value(scopes);
+                const right = asArray(rhs.value(scopes));
+                return right.every(r => predicate(left,r));
+            };
+            default : return (scopes: any[]) => {
+                const left = lhs.value(scopes);
+                const right = rhs.value(scopes);
+                return predicate(left, right);
+            }; 
+        }
+    }        
 };
 
 export const compileOrGroup = (expr: ast.OrGroup): CompiledExpression => {
