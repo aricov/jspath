@@ -118,26 +118,17 @@ describe('Compiler', () => {
             });
         });
 
-        describe('@..c is 42', () => {
-            const expr = Expr.is(Term.path(_, Desc.named('c')), Term.value(42));
+        describe('some @..c is 42', () => {
+            const expr = Expr.is(Term.some(_, Desc.named('c')), Term.value(42));
             const fn = compileExpression(expr);
             it('should match on an object with a descendant property named "c" of 42 ', () => {
                 expect(fn([ {a: {b: {c: 42}}} ])).true;
             });
-        });
 
-        describe('@..c is 42', () => {
-            const expr = Expr.is(Term.path(_, Desc.named('c')), Term.value(42));
-            const fn = compileExpression(expr);
-            it('should match on an object with more than one descendant property named "c", when the first one is 42 ', () => {
-                // There may be a need for all/some qualifiers in front of expresssions,
-                // to disambiguate the behaviour of "multi" paths
-                // - `all @..c is 42` or with a clever alias `all @..c are 42
-                // - `some @..c is 42`
-                // We may also need them on the right hand side ...
+            it('should match on an object with more than one descendant property named "c"', () => {
                 expect(fn([ {a: {b: {c: 42}, d: {c: 42}} } ]), 'all').true;
                 expect(fn([ {a: {b: {c: 42}, d: {c: 41}} } ]), 'first').true;
-                expect(fn([ {a: {b: {c: 41}, d: {c: 42}} } ]), 'second').false;
+                expect(fn([ {a: {b: {c: 41}, d: {c: 42}} } ]), 'second').true;
             });
         });
 
@@ -151,6 +142,76 @@ describe('Compiler', () => {
                 expect(fn([ {a: {b: {c: 41}, d: 41}} ])).false;
                 expect(fn([ {a: {b: {c: 42}}} ])).false;
                 expect(fn([ {a: {d: 42}} ])).false;
+            });
+        });
+
+        describe('every @..c is 42', () => {
+            const expr = Expr.is(Term.every(_, Desc.named('c')), Term.value(42));
+            const fn = compileExpression(expr);
+            it('should match on an object with a descendant property named "c" of 42 ', () => {
+                expect(fn([ {a: {b: {c: 42}}} ])).true;
+            });
+
+            it('should match on an object with more than one descendant property named "c" and value 42', () => {
+                expect(fn([ {a: {b: {c: 42}, d: {c: 42}} } ]), 'all').true;
+            });
+
+            it('should fail on an object with at least one descendant property named "c" and value 41', () => {
+                expect(fn([ {a: {b: {c: 41}, d: {c: 42}} } ]), 'all').false;
+            });
+        });
+
+        describe('every @..c is every @..d', () => {
+            const expr = Expr.is(Term.every(_, Desc.named('c')), Term.every(_, Desc.named('c')));
+            const fn = compileExpression(expr);
+            it('should match an object where all `c` and `d` have the same value at any level', () => {
+                expect(fn([ 
+                    {
+                        A: { 
+                            B: {
+                                a: 40,
+                                b: 41,
+                                c: 42,
+                                d: 42
+                            },
+                            C: {
+                                a: 41,
+                                b: 0,
+                                c: 42,
+                                d : 42,
+                                e: 24
+                            }
+                        },
+                        D: { a: 43, c: 42, d:42, e: 41},
+                        d: 42
+                    }
+                ])).true;
+            });
+        });
+
+        describe('every @..c is some @..d', () => {
+            const expr = Expr.is(Term.every(_, Desc.named('c')), Term.some(_, Desc.named('c')));
+            const fn = compileExpression(expr);
+            it('should match an object where all `c` have the same value as some `d` any level', () => {
+                expect(fn([ 
+                    {
+                        A: { 
+                            B: {
+                                c: 43,
+                                d: 42
+                            },
+                            C: {
+                                a: 41,
+                                b: 0,
+                                c: 42,
+                                d : 41,
+                                e: 24
+                            }
+                        },
+                        D: { a: 43, c: 41, d:43, e: 41},
+                        d: 40
+                    }
+                ])).true;
             });
         });
     });
@@ -234,7 +295,7 @@ describe('Compiler', () => {
                 );
         });
 
-        it ('should find descnedants of an object by their child property value', () => {
+        it ('should find descendants of an object by their child property value', () => {
             const expr = Expr.is(Term.path(_, Child.named('a')), Term.value(42));
             const compiled = compilePath([$, Desc.filter(expr)]);
             expect(compiled.multi).true;

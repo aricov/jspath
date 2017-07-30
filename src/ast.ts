@@ -78,18 +78,17 @@ export class BinaryExpression {
 
 export type Expression = OrGroup | AndGroup | BinaryExpression | UnaryExpression
 
-export class PathTerm {
-    public readonly type = 'path';
-    constructor(
-        public readonly value: Path
-    ){} 
+export type PathQualifier = 'some' | 'every';
+
+export interface PathTerm {
+    readonly type: 'path';
+    readonly value: Path;
+    readonly qualifier?: PathQualifier;
 }
 
-export class ValueTerm {
-    public readonly type = 'value';
-    constructor(
-        public readonly value: any
-    ){} 
+export interface ValueTerm {
+    readonly type: 'value';
+    readonly value: any;
 }
 
 export type Term = PathTerm | ValueTerm; 

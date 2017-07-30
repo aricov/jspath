@@ -101,11 +101,23 @@ expr_simple
   }
  
 expr_term
-  = p:path { return Term.path(...p); } 
+  = q:expr_qual? p:path {
+    switch( q ) {
+        case 'some': return Term.some(...p);
+        case 'every': return Term.every(...p);
+        default: return Term.path(...p); 
+    } 
+  } 
   / '`'? v:value { return Term.value(v); }
+
+expr_qual
+  = SOME __ { return 'some'; }
+  / EVERY __ { return 'every'; }
 
 OR = 'or'i
 AND = 'and'i
+SOME = 'some'i
+EVERY = 'every'i
 
 operator 
   = 'is' { return text(); }
