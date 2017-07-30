@@ -345,5 +345,109 @@ describe('Parser: ', () => {
                 console.log(error);
             }
         });
-    });
+
+        describe('with path qualifier `some`', () => {
+            it('should parse the `some` qualifier on a left hand side path', () => {
+                const tree = parser.parse('some ..code is 42', {startRule: 'expr'});
+                expect(tree).to.deep.equal({
+                   type: 'binary',
+                   op: 'is',
+                   neg: false,
+                   lhs: {
+                       type: 'path',
+                       qualifier: 'some',
+                       value: [{
+                           type: 'relative',
+                           index: 0
+                       },{
+                           type: 'named',
+                           descendants: true,
+                           names: ['code']
+                       }]
+                   },
+                   rhs : {
+                       type: 'value',
+                       value: 42
+                   }
+                });
+            });
+
+            it('should parse the `some` qualifier on a right hand side path', () => {
+                const tree = parser.parse('42 is some ..code', {startRule: 'expr'});
+                expect(tree).to.deep.equal({
+                   type: 'binary',
+                   op: 'is',
+                   neg: false,
+                   rhs: {
+                       type: 'path',
+                       qualifier: 'some',
+                       value: [{
+                           type: 'relative',
+                           index: 0
+                       },{
+                           type: 'named',
+                           descendants: true,
+                           names: ['code']
+                       }]
+                   },
+                   lhs : {
+                       type: 'value',
+                       value: 42
+                   }
+                });
+            });
+        });
+
+        describe('with path qualifier `every`', () => {
+            it('should parse the `every` qualifier on a left hand side path', () => {
+                const tree = parser.parse('every ..code is 42', {startRule: 'expr'});
+                expect(tree).to.deep.equal({
+                   type: 'binary',
+                   op: 'is',
+                   neg: false,
+                   lhs: {
+                       type: 'path',
+                       qualifier: 'every',
+                       value: [{
+                           type: 'relative',
+                           index: 0
+                       },{
+                           type: 'named',
+                           descendants: true,
+                           names: ['code']
+                       }]
+                   },
+                   rhs : {
+                       type: 'value',
+                       value: 42
+                   }
+                });
+            });
+
+            it('should parse the `every` qualifier on a right hand side path', () => {
+                const tree = parser.parse('42 is every ..code', {startRule: 'expr'});
+                expect(tree).to.deep.equal({
+                   type: 'binary',
+                   op: 'is',
+                   neg: false,
+                   rhs: {
+                       type: 'path',
+                       qualifier: 'every',
+                       value: [{
+                           type: 'relative',
+                           index: 0
+                       },{
+                           type: 'named',
+                           descendants: true,
+                           names: ['code']
+                       }]
+                   },
+                   lhs : {
+                       type: 'value',
+                       value: 42
+                   }
+                });
+            });
+        });
+    });   
 });

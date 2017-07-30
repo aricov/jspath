@@ -23,8 +23,10 @@ export const Desc = {
 };
 
 export const Term = {
-    path: (...p: ast.Path ) => new ast.PathTerm(p),
-    value: (v: any) => new ast.ValueTerm(v)
+    path: (...p: ast.Path ): ast.PathTerm => ({ type: 'path', value: p}),
+    some: (...p: ast.Path): ast.PathTerm => ({ type: 'path', value: p, qualifier: 'some'}),
+    every: (...p: ast.Path): ast.PathTerm => ({ type: 'path', value: p, qualifier: 'every'}),
+    value: (v: any): ast.ValueTerm => ({ type: 'value', value: v }),
 };
 
 export const Expr = {
