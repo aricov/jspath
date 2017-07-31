@@ -167,7 +167,7 @@ describe('Matcher: ', () => {
                 {path: [0, 2], value: 3}
             ]);
         }); 
-        it ( 'should match the first element of a two elemnets array', () => {
+        it ( 'should match the first element of a two elements array', () => {
             const results = match([1, 2]);
             expect(results).to.deep.equal([
                 {path: [0, 0], value: 1}
