@@ -1,79 +1,73 @@
-export class RootScope {
-    readonly type = 'root';
-    constructor(public readonly index = 0) {}
+export interface RootScope {
+    readonly type: 'root';
+    readonly index: number;
 }
 
-export class RelativeScope {
-    readonly type = 'relative';
-    constructor(public readonly index = 1) {}
+export interface RelativeScope {
+    readonly type: 'relative';
+    readonly index: number;
 }
 
 export type Scope = RootScope | RelativeScope
 
-export class All {
-    readonly type = 'all';
-    constructor(public readonly descendants = false) {}
+export interface All {
+    readonly type: 'all';
+    readonly descendants: boolean;
 }
 
-export class Element {
-    readonly type = 'element';
-    constructor(public readonly index: number) {}
+export interface Elements {
+    readonly type: 'elements';
+    readonly indices: number[];
 }
 
-export class Elements {
-    readonly type = 'elements';
-    constructor(public readonly indices: number[]) {}
+export interface Named {
+    readonly type: 'named';
+    readonly names: string[];
+    readonly descendants: boolean;
 }
 
-export class Named {
-    readonly type = 'named';
-    constructor(public readonly names: string[], public readonly descendants = false) {}
+export interface Slice {
+    readonly type: 'slice';
+    readonly start: number; 
+    readonly end: number;
+    readonly step: number;
 }
 
-export class Slice {
-    readonly type = 'slice';
-    constructor(
-        public readonly start = 0, 
-        public readonly end = Infinity, 
-        public readonly step = 1) {}
-}
-
-export class Filter {
-    readonly type = 'filter';
-    constructor(public readonly expr: Expression, public readonly descendants = false) {}
+export interface Filter {
+    readonly type: 'filter';
+    readonly expr: Expression;
+    readonly descendants: boolean;
 } 
 
 export type Component = Scope | Named | Elements | Slice | All | Filter;
 
 export type Path = Component[];
 
-export class OrGroup {
-    readonly type = 'or';
-    constructor(public readonly lhs: Expression, public readonly rhs: Expression) {}
+export interface  OrGroup {
+    readonly type: 'or';
+    readonly lhs: Expression;
+    readonly rhs: Expression;
 }
 
-export class AndGroup {
-    readonly type = 'and';
-    constructor(public readonly lhs: Expression, public readonly rhs: Expression) {}
+export interface AndGroup {
+    readonly type: 'and';
+    readonly lhs: Expression; 
+    readonly rhs: Expression;
 }
 
-export class UnaryExpression {
-    readonly type = 'unary';
-    constructor(
-        public readonly op: string,
-        public readonly neg = false,
-        public readonly lhs: Term
-    ){}
+export interface UnaryExpression {
+    readonly type: 'unary';
+    readonly op: string;
+    readonly neg: boolean;
+    readonly lhs: Term;
 } 
 
-export class BinaryExpression {
-    readonly type = 'binary';
-    constructor(
-        public readonly op: string,
-        public readonly neg = false,
-        public readonly lhs: Term,
-        public readonly rhs: Term
-    ){}
+export interface BinaryExpression {
+    readonly type: 'binary';
+    readonly op: string;
+    readonly neg: boolean;
+    readonly lhs: Term;
+    readonly rhs: Term
 }
 
 export type Expression = OrGroup | AndGroup | BinaryExpression | UnaryExpression

@@ -1,25 +1,25 @@
 import * as ast from './ast';
 
-export const $ = new ast.RootScope(0);
-export const _ = new ast.RelativeScope(0);
-
 export const Scope = {
-    absolute: (index?: number) => new ast.RootScope(index),
-    relative: (index?: number) => new ast.RelativeScope(index)
+    absolute: (index?: number): ast.RootScope => ({ type: 'root', index: index || 0}),
+    relative: (index?: number): ast.RelativeScope => ({ type: 'relative', index:index || 0})
 };
 
+export const $:ast.RootScope = Scope.absolute(0);
+export const _:ast.RelativeScope = Scope.relative(0);
+
 export const Child = {
-    all: new ast.All(false),
-    named: (...names:string[]) => new ast.Named(names, false),
-    at: (...indices:number[]) => new ast.Elements(indices),
-    slice: (start:number, end:number, step:number) => new ast.Slice(start, end, step),
-    filter: (expr: ast.Expression) => new ast.Filter(expr, false)
+    all: { type: 'all', descendants: false} as ast.All,
+    named: (...names:string[]):ast.Named => ({ type:'named', names, descendants: false}),
+    at: (...indices:number[]): ast.Elements => ({ type:'elements', indices}),
+    slice: (start:number=0, end:number=Infinity, step:number=1): ast.Slice => ({ type: 'slice', start, end, step}),
+    filter: (expr: ast.Expression): ast.Filter => ({ type: 'filter', expr, descendants: false})
 };
 
 export const Desc = {
-    all: new ast.All(true),
-    named: (...names:string[]) => new ast.Named(names, true),
-    filter: (expr: ast.Expression) => new ast.Filter(expr, true)
+    all: { type: 'all', descendants: true} as ast.All,
+    named: (...names:string[]): ast.Named => ({ type: 'named', names, descendants: true}),
+    filter: (expr: ast.Expression): ast.Filter => ({ type: 'filter', expr, descendants: true})
 };
 
 export const Term = {
@@ -30,14 +30,14 @@ export const Term = {
 };
 
 export const Expr = {
-    is: (lhs: ast.Term, rhs: ast.Term) => new ast.BinaryExpression('is', false, lhs, rhs),
-    binary: ( op:string, lhs: ast.Term, rhs: ast.Term ) => new ast.BinaryExpression(op, false, lhs, rhs),
-    unary: ( op:string, term: ast.Term ) => new ast.UnaryExpression(op, false, term),
+    is: (lhs: ast.Term, rhs: ast.Term) => Expr.binary('is', lhs, rhs),
+    binary: ( op:string, lhs: ast.Term, rhs: ast.Term ):ast.BinaryExpression => ({type: 'binary', op, neg:false, lhs, rhs}),
+    unary: ( op:string, term: ast.Term ):ast.UnaryExpression => ({type: 'unary', op, neg:false, lhs:term}),
     not : {
-        is: (lhs: ast.Term, rhs: ast.Term) => new ast.BinaryExpression('is', true, lhs, rhs),
-        binary: ( op:string, lhs: ast.Term, rhs: ast.Term ) => new ast.BinaryExpression(op, true, lhs, rhs),
-        unary: ( op:string, term: ast.Term ) => new ast.UnaryExpression(op, true, term),
+        is: (lhs: ast.Term, rhs: ast.Term):ast.BinaryExpression => Expr.not.binary('is', lhs, rhs),
+        binary: ( op:string, lhs: ast.Term, rhs: ast.Term ):ast.BinaryExpression => ({type: 'binary', op, neg:true, lhs, rhs}),
+        unary: ( op:string, term: ast.Term ):ast.UnaryExpression => ({type: 'unary', op, neg:true, lhs:term}),
     },
-    or: (lhs: ast.Expression, rhs: ast.Expression) => new ast.OrGroup(lhs,rhs),
-    and: (lhs: ast.Expression, rhs: ast.Expression) => new ast.AndGroup(lhs,rhs)
+    or: (lhs: ast.Expression, rhs: ast.Expression):ast.OrGroup => ({type: 'or', lhs,rhs}),
+    and: (lhs: ast.Expression, rhs: ast.Expression):ast.AndGroup => ({type:'and',lhs,rhs})
 };
