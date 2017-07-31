@@ -10,7 +10,7 @@
     "@types/node": "^8.0.13",
     "chai": "^4.0.2",
     "mocha": "^3.4.2",
-    "pegjs": "github:aricov/pegjs#typings",
+    "pegjs": "github:pegjs/pegjs",
     "ts-node": "^3.1.0",
     "typescript": "^2.4.2"
   },
