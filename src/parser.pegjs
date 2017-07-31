@@ -93,10 +93,10 @@ expr_bool
   / '(' _ grp:expr_or _ ')' { return grp; }
 
 expr_simple
-  = neg:'not 'i? lhs:expr_term __ op:identifier rhs:(__ t:expr_term { return t; })? {
+  = lhs:expr_term __ op:expr_operator rhs:(__ t:expr_term { return t; })? {
     return rhs !== null
-      ? (neg !== null ? Expr.not.binary(op, lhs, rhs) : Expr.binary(op, lhs, rhs))
-      : (neg !== null ? Expr.not.unary(op, lhs) : Expr.unary(op, lhs)) 
+      ? (op.neg ? Expr.not.binary(op.op, lhs, rhs) : Expr.binary(op.op, lhs, rhs))
+      : (op.neg ? Expr.not.unary(op.op, lhs) : Expr.unary(op.op, lhs)) 
       ;
   }
  
@@ -109,6 +109,12 @@ expr_term
     } 
   } 
   / '`'? v:value { return Term.value(v); }
+
+expr_operator 
+  = !('not'i __) op:identifier __ 'not'i { return {neg: true, op: op}; } 
+  / neg:('not'i __)? op:identifier { return {neg: neg!=null, op: op}; }  
+
+expr_not = 'not'i __;
 
 expr_qual
   = SOME __ { return 'some'; }

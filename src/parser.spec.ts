@@ -220,9 +220,9 @@ describe('Parser: ', () => {
                     }
                 });
             });
-            it ( 'not $.code is `5', () => {
+            it ( '$.code is not `5', () => {
                 const results = parser.parse(
-                    'not $.code is `5', 
+                    '$.code is not `5', 
                     {startRule: 'expr'}
                 );
                 expect(results).to.deep.equal({
@@ -320,9 +320,9 @@ describe('Parser: ', () => {
                 }
             });
         });
-        it ( 'not $.code empty', () => {
+        it ( '$.code not empty', () => {
             const results = parser.parse(
-                'not $.code empty', 
+                '$.code not empty', 
                 {startRule: 'expr'}
             );
             expect(results).to.deep.equal({
