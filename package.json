@@ -1,6 +1,6 @@
 {
   "name": "jspath",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Simple JSON Path expression matching",
   "main": "api.js",
   "dependencies": {},
@@ -12,7 +12,7 @@
     "mocha": "^3.4.2",
     "pegjs": "github:aricov/pegjs#typings",
     "ts-node": "^3.1.0",
-    "typescript": "^2.3.4"
+    "typescript": "^2.4.2"
   },
   "scripts": {
     "build": "tsc",
