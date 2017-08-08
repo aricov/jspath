@@ -24,7 +24,12 @@ const prepend = (path: MatchPath) => (match: Match) => ({
     value: match.value
 });
 
-export const compiler = (custom: Operators = {}) => {
+export interface Compiler {
+    compilePath: (path: ast.Path) => PathMatcher;
+    compileExpression: (expr: ast.Expression) => CompiledExpression;
+};
+
+export const Compiler = (custom: Operators = {}): Compiler => {
     const operators = {...builtin, ...custom }; 
 
     const compileValueTerm = (value: any[]) => (scopes: any[]) => value;

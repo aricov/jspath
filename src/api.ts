@@ -1,7 +1,7 @@
 import * as ast from './ast';
 import * as parser from './parser';
 import { Operators } from './operators';
-import { PathMatcher, CompiledExpression, compiler } from './compiler';
+import { PathMatcher, CompiledExpression, Compiler } from './compiler';
 
 export { PathMatcher, CompiledExpression };
 
@@ -12,7 +12,7 @@ export const Path = {
         return {
             ast,
             compile: (operators: Operators = {}) => {
-                const matcher = compiler(operators).compilePath(ast);
+                const matcher = Compiler(operators).compilePath(ast);
                 return {
                     matches: (source: any) => matcher.match([source]),
                     values: (source: any) => matcher.match([source]).map(m => m.value),
@@ -32,7 +32,7 @@ export const Expression = {
         return {
             ast,
             compile: (operators: Operators = {}) => {
-                const expr = compiler(operators).compileExpression(ast);
+                const expr = Compiler(operators).compileExpression(ast);
                 return {
                     test: (source: any) => expr([source])
                 };

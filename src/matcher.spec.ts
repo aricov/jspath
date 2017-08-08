@@ -1,9 +1,9 @@
 import { Path } from './ast';
-import { compiler } from './compiler';
+import { Compiler } from './compiler';
 import { Child, Desc, $ } from './builder';
 import { expect } from 'chai';
 
-const {compilePath} = compiler();
+const {compilePath} = Compiler();
 const matcher = (path: Path) => (scope: any) => compilePath(path).match([scope]); 
 
 describe('Matcher: ', () => {
