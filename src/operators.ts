@@ -20,7 +20,9 @@ const isIn = (lhs: any, rhs: any) => {
 
 const empty = (value: any) => deep.empty(value);
 
-export const operators: {[name:string]: Operator} = { 
+export type Operators = {[name:string]: Operator};
+
+export const builtin: Operators = { 
     is,
     in: isIn,
     empty

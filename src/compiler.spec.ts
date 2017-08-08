@@ -1,9 +1,9 @@
-import { compileExpression, compilePath } from './compiler';
+import { compiler } from './compiler';
 import { Expr, $, _, Child, Desc, Term } from './builder';
 import { expect } from 'chai';
 
 describe('Compiler', () => {
-
+    const {compileExpression, compilePath} = compiler();
     describe(' - Expressions:', () => {
         it('Tautology: 42 is 42', () => {
             const expr = Expr.is(Term.value(42), Term.value(42));

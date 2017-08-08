@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 
-import { operators } from './operators';
+import { builtin as operators } from './operators';
 
 describe('Operators', () => {
     describe('- empty', () => {

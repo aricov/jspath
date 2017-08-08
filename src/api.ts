@@ -1,6 +1,7 @@
 import * as ast from './ast';
 import * as parser from './parser';
-import { PathMatcher, CompiledExpression, compilePath, compileExpression } from './compiler';
+import { Operators } from './operators';
+import { PathMatcher, CompiledExpression, compiler } from './compiler';
 
 export { PathMatcher, CompiledExpression };
 
@@ -10,8 +11,8 @@ export const Path = {
         const ast = parser.parse(expression) as ast.Path;
         return {
             ast,
-            compile: () => {
-                const matcher = compilePath(ast);
+            compile: (operators: Operators = {}) => {
+                const matcher = compiler(operators).compilePath(ast);
                 return {
                     matches: (source: any) => matcher.match([source]),
                     values: (source: any) => matcher.match([source]).map(m => m.value),
@@ -21,7 +22,7 @@ export const Path = {
         };
     },
 
-    compile: (expression: string) => Path.parse(expression).compile()
+    compile: (expression: string, operators: Operators = {}) => Path.parse(expression).compile(operators)
 };
 
 export const Expression = {
@@ -30,8 +31,8 @@ export const Expression = {
         const ast = parser.parse(expression, {startRule:'expr'});
         return {
             ast,
-            compile: () => {
-                const expr = compileExpression(ast);
+            compile: (operators: Operators = {}) => {
+                const expr = compiler(operators).compileExpression(ast);
                 return {
                     test: (source: any) => expr([source])
                 };
@@ -39,7 +40,7 @@ export const Expression = {
         };
     },
 
-    compile: (expression: string) => Expression.parse(expression).compile(),
+    compile: (expression: string, operators:Operators = {}) => Expression.parse(expression).compile(operators),
 
-    test: (expression: string, source: any) => Expression.compile(expression).test(source)
+    test: (expression: string, source: any, operators:Operators = {}) => Expression.compile(expression, operators).test(source)
 };
