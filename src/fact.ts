@@ -1,6 +1,7 @@
 import * as ast from './ast';
 import { MatchPath } from './matcher';
-import { compiler } from './compiler';
+import { Compiler } from './compiler';
+import { Operators } from './operators';
 
 export type Extent = 'ancestors' | 'descendants';
 
@@ -10,11 +11,16 @@ export interface Fact {
     extent?: Extent;
 };
 
+export interface Guard {
+    name: string;
+    not: boolean;
+}
+
 export interface Rule {
     name: string; 
     context: ast.Path;
     extent?: Extent;
-    guards: string[];
+    guards: Guard[];
     expression?: ast.Expression; 
 };
 
@@ -23,7 +29,7 @@ const isSubpath = (path: MatchPath) => ({
         && path.every((elt, index) => ref[index] === elt)
 });
 
-export const matchFact = (fact: Fact, context: MatchPath): boolean => {
+const matchFact = (fact: Fact, context: MatchPath): boolean => {
     switch(fact.extent) {
         case 'descendants':
             return isSubpath(context).of(fact.context);
@@ -35,22 +41,23 @@ export const matchFact = (fact: Fact, context: MatchPath): boolean => {
     }
 };
 
-export const matchFacts = (facts: Fact[], context: MatchPath): boolean => {
-    return facts.some(fact => matchFact(fact, context));
-};
+const matchFacts = (facts: Fact[], context: MatchPath): boolean =>
+    facts.some(fact => matchFact(fact, context));
 
-export const matchGuards = (guards: string[], facts: Fact[], context: MatchPath) => {
-    return guards.every(guard => matchFacts(facts.filter(fact => fact.name === guard), context));
-};
+const matchGuard = (guard: Guard, facts: Fact[], context: MatchPath) =>
+    guard.not !== matchFacts(facts.filter(fact => fact.name === guard.name), context);
 
-export const compileGuards = (guards: string[]) => (facts: Fact[], context: MatchPath) => matchGuards(guards, facts, context);
+const matchGuards = (guards: Guard[], facts: Fact[], context: MatchPath) =>
+    guards.every(guard => matchGuard(guard, facts, context));
 
-export const compileRule = (rule: Rule) => {
-    const { compilePath, compileExpression } = compiler();
+export const compileGuards = (guards: Guard[]) => 
+    (facts: Fact[], context: MatchPath) => matchGuards(guards, facts, context);
+
+export const compileRule = (rule: Rule, compiler: Compiler) => {
     const compiled = {
-        context: compilePath(rule.context),
+        context: compiler.compilePath(rule.context),
         guards: compileGuards(rule.guards),
-        expression: compileExpression(rule.expression)
+        expression: compiler.compileExpression(rule.expression)
     };
 
     return (source: any, facts: Fact[]): Fact[] =>
@@ -66,8 +73,9 @@ export const compileRule = (rule: Rule) => {
     
 };
 
-export const compileRules = (rules: Rule[]) => {
-    const compiled = rules.map(compileRule);
+export const compileRules = (rules: Rule[], operators:Operators = {}) => {
+    const compiler = Compiler(operators);
+    const compiled = rules.map(rule => compileRule(rule, compiler));
     return (source: any, initialFacts: Fact[]): Fact[] => {
         return compiled.reduce(
             (facts, rule) => [...facts, ...rule(source, facts)],
